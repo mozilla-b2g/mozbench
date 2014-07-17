@@ -1,0 +1,6 @@
+mozinfo
+mozinstall
+mozlog
+mozprocess
+mozrunner
+wptserve == 1.0.1
