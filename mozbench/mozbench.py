@@ -45,10 +45,6 @@ def results_handler(request, response):
 routes = [('POST', '/results', results_handler),
           ('GET', '/*', wptserve.handlers.file_handler)]
 
-
-TESTS = [{'suite': 'webaudio-benchmark',
-          'url': 'http://localhost:8000/webaudio-benchmark/index.html'}]
-
 def install_firefox(logger, url):
     logger.debug('installing firefox')
 
@@ -133,12 +129,20 @@ def cli(args):
     httpd = wptserve.server.WebTestHttpd(host='127.0.0.1', port=8000,
         routes=routes, doc_root=static_path)
     httpd.start()
+    url_prefix = 'http://' + httpd.host + ':' + str(httpd.port) + '/'
 
-    for test in TESTS:
-        suite = test['suite']
-        url = test['url']
+    with open(os.path.join(os.path.dirname(__file__), 'benchmarks.json')) as f:
+        benchmarks = json.load(f)
 
-        logger.debug('starting test: %s' % suite)
+    for benchmark in benchmarks:
+        suite = benchmark['suite']
+        url = url_prefix + benchmark['url']
+
+        if not benchmark['enabled']:
+            logger.debug('skipping disabled benchmark: %s' % suite)
+            continue
+
+        logger.debug('starting benchmark: %s' % suite)
 
         # Run firefox
         logger.debug('running firefox')

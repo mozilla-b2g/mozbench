@@ -1,0 +1,6 @@
+[
+  {"suite": "webaudio-benchmark",
+   "url": "webaudio-benchmark/index.html",
+   "enabled": true
+  }
+]
