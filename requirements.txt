@@ -1,3 +1,4 @@
+datazilla
 mozinfo
 mozinstall
 mozlog

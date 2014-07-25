@@ -4,6 +4,7 @@
 
 import argparse
 import copy
+from dzclient import DatazillaRequest, DatazillaResult
 import json
 import logging
 import mozinfo
@@ -17,12 +18,14 @@ from mozprocess import ProcessHandler
 import mozrunner
 import os
 import platform
+import re
 import sys
 import time
 import urllib
 import wait
 import wptserve
 
+headers = None
 results = None
 
 class ChromeRunner(mozrunner.base.BaseRunner):
@@ -39,7 +42,9 @@ class ChromeRunner(mozrunner.base.BaseRunner):
 
 @wptserve.handlers.handler
 def results_handler(request, response):
+    global headers
     global results
+    headers = request.headers
     results = json.loads(request.POST['results'])
 
 routes = [('POST', '/results', results_handler),
@@ -61,8 +66,10 @@ def install_firefox(logger, url):
     return 'firefox/firefox.exe'
 
 def runtest(logger, runner):
+    global headers
     global results
 
+    headers = None
     results = None
     runner.start()
 
@@ -71,39 +78,52 @@ def runtest(logger, runner):
     except wait.TimeoutException:
         logger.error('timed out waiting for results')
 
+    # extract browser version from user-agent
+    user_agent = headers['user-agent']
+    version = None
+    m = re.search('(Firefox/[\d\.]+|Chrome/[\d\.]+)', user_agent)
+    if m:
+        version = m.groups()[0].split('/')[1]
+
     runner.stop()
     runner.wait()
 
-    return copy.copy(results)
+    return version, copy.copy(results)
 
-def postresults(logger, name, suite, results):
-    dz = {}
+def postresults(logger, browser, branch, version, benchmark, results):
 
-    # results
-    dz['results'] = results
+    secret_path = os.path.join(os.path.expanduser('~'), 'datazilla-secret.txt')
+    with open(secret_path, 'r') as f:
+        key, secret = f.read().strip().split(',')
 
-    # test build
-    # TODO: should at least get version information here
-    test_build = {}
-    test_build['name'] = name
-    dz['test_build'] = test_build
+    # TODO: get a real build id
+    build_id = '%s' % int(time.time())
 
-    # test machine
-    test_machine = {}
-    test_machine['name'] = platform.node()
-    test_machine['os'] = mozinfo.os
-    test_machine['osversion'] = mozinfo.version
-    test_machine['platform'] = mozinfo.processor
-    dz['test_machine'] = test_machine
+    req = DatazillaRequest(
+        protocol = 'https',
+        host = 'datazilla.mozilla.org',
+        project = 'mozbench',
+        oauth_key = key,
+        oauth_secret = secret,
+        machine_name = platform.node(),
+        os = mozinfo.os,
+        os_version = mozinfo.version,
+        platform = mozinfo.processor,
+        build_name = browser,
+        version = version[:2], # Chrome's version is too long for datazilla
+        branch = branch,
+        revision = version,
+        id = build_id)
 
-    # testrun
-    testrun = {}
-    testrun['date'] = time.time()
-    testrun['suite'] = suite
-    dz['testrun'] = testrun
-
-    # just log these for now
-    logger.info(json.dumps(dz))
+    req.add_datazilla_result(results)
+    logger.debug('posting %s %s results to datazilla.mozilla.org' %
+                    (browser, version))
+    responses = req.submit()
+    for resp in responses:
+        # TODO: I've seen intermitten 403 Forbidden here, we should have
+        #       some retries in that case.
+        logger.debug('server response: %d %s %s' %
+            (resp.status, resp.reason, resp.read()))
 
 def cli(args):
     global results
@@ -115,11 +135,13 @@ def cli(args):
                         required=True)
     parser.add_argument('--chrome-path', help='path to chrome executable',
                         required=True)
+    parser.add_argument('--post-results', action='store_true',
+                        help='if specified, post results to datazilla')
     commandline.add_logging_group(parser)
     args = parser.parse_args(args)
 
     logging.basicConfig()
-    logger = commandline.setup_logging('gamesbench', vars(args), {})
+    logger = commandline.setup_logging('mozbench', vars(args), {})
 
     firefox_binary = install_firefox(logger, args.firefox_url)
 
@@ -137,6 +159,9 @@ def cli(args):
     for benchmark in benchmarks:
         suite = benchmark['suite']
         url = url_prefix + benchmark['url']
+        num_runs = benchmark['number_of_runs']
+        name = benchmark['name']
+        value = benchmark['value']
 
         if not benchmark['enabled']:
             logger.debug('skipping disabled benchmark: %s' % suite)
@@ -145,22 +170,41 @@ def cli(args):
         logger.debug('starting benchmark: %s' % suite)
 
         # Run firefox
-        logger.debug('running firefox')
-        runner = mozrunner.FirefoxRunner(binary=firefox_binary, cmdargs=[url])
-        results = runtest(logger, runner)
-        if results is None:
-            error = True
+        dzres = DatazillaResult()
+        dzres.add_testsuite(suite)
+        for i in xrange(0, num_runs):
 
-        postresults(logger, 'firefox', suite, results)
+            logger.debug('firefox run %d' % i)
+            runner = mozrunner.FirefoxRunner(binary=firefox_binary, cmdargs=[url])
+            version, results = runtest(logger, runner)
+            if results is None:
+                logger.error('no results found')
+                error = True
+            else:
+                for result in results:
+                    dzres.add_test_results(suite, result[name], [result[value]])
+                logger.debug('firefox results: %s' % json.dumps(results))
+
+        if args.post_results:
+            postresults(logger, 'firefox', 'nightly', version, benchmark, dzres)
 
         # Run chrome
-        logger.debug('running chrome')
-        runner = ChromeRunner(binary=args.chrome_path, cmdargs=[url])
-        results = runtest(logger, runner)
-        if results is None:
-            error = True
+        dzres = DatazillaResult()
+        dzres.add_testsuite(suite)
+        for i in xrange(0, num_runs):
+            logger.debug('chrome run %d' % i)
+            runner = ChromeRunner(binary=args.chrome_path, cmdargs=[url])
+            version, results = runtest(logger, runner)
+            if results is None:
+                logger.error('no results found')
+                error = True
+            else:
+                for result in results:
+                    dzres.add_test_results(suite, result[name], [result[value]])
+                logger.debug('chrome results: %s' % json.dumps(results))
 
-        postresults(logger, 'chrome', suite, results)
+        if args.post_results:
+            postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
 
     return 0 if not error else 1
 

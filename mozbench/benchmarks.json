@@ -1,6 +1,9 @@
 [
   {"suite": "webaudio-benchmark",
    "url": "webaudio-benchmark/index.html",
-   "enabled": true
+   "number_of_runs": 5,
+   "enabled": true,
+   "name": "name",
+   "value": "duration"
   }
 ]

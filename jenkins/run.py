@@ -25,5 +25,6 @@ chrome_path = os.path.expanduser('~') + '/AppData/Local/Google/Chrome SxS/Applic
 
 args = ['--firefox-url', firefox_url,
         '--chrome-path', chrome_path,
-        '--log-mach=-']
+        '--log-mach=-',
+        '--post-results']
 exit(subprocess.call(['venv/Scripts/python', '-m', 'mozbench.mozbench'] + args))
