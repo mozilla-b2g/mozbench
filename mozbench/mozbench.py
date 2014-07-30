@@ -53,17 +53,22 @@ routes = [('POST', '/results', results_handler),
 def install_firefox(logger, url):
     logger.debug('installing firefox')
 
-    # TODO: make this not windows only
-    name, headers = urllib.urlretrieve(url, 'firefox.exe')
+    name, headers = urllib.urlretrieve(url, 'firefox-installer')
 
     cmd = ['mozinstall', '-d', '.', name]
     p = ProcessHandler(cmd)
     p.run()
     p.wait()
 
-    # TODO: make this not windows only
-    #       return None if any errors above
-    return 'firefox/firefox.exe'
+    path = 'firefox/firefox'
+    if mozinfo.os == 'win':
+        path = 'firefox/firefox.exe'
+
+    if not os.path.isfile(path):
+        logger.error('installation failed: path %s does not exist' % path)
+        path = None
+
+    return path
 
 def runtest(logger, runner):
     global headers
@@ -144,6 +149,8 @@ def cli(args):
     logger = commandline.setup_logging('mozbench', vars(args), {})
 
     firefox_binary = install_firefox(logger, args.firefox_url)
+    if firefox_binary is None:
+        return 1
 
     logger.debug('starting webserver')
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
