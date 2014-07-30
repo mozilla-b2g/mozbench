@@ -53,7 +53,7 @@ routes = [('POST', '/results', results_handler),
 def install_firefox(logger, url):
     logger.debug('installing firefox')
 
-    name, headers = urllib.urlretrieve(url, 'firefox-installer')
+    name, headers = urllib.urlretrieve(url, 'firefox.exe')
 
     cmd = ['mozinstall', '-d', '.', name]
     p = ProcessHandler(cmd)
