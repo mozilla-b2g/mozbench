@@ -1,3 +1,4 @@
+import firefox_version
 import os
 import shutil
 import subprocess
@@ -19,7 +20,9 @@ subprocess.call(['venv/Scripts/python', 'setup.py', 'install'])
 # Run benchmarks
 # TODO: We should pull this from an environment variable so that it can
 #       be easily specified as part of the Jenkins job.
-firefox_url = 'http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/firefox-34.0a1.en-US.win64-x86_64.installer.exe'
+FIREFOX_URL= 'http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/'
+version = firefox_version.get_firefox_version(FIREFOX_URL)
+firefox_url = FIREFOX_URL + version + '.win64-x86_64.installer.exe'
 chrome_path = os.path.expanduser('~') + '/AppData/Local/Google/Chrome SxS/Application/chrome.exe'
 
 args = ['--firefox-url', firefox_url,
