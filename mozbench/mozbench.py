@@ -98,6 +98,9 @@ def runtest(logger, runner):
 def postresults(logger, browser, branch, version, benchmark, results):
 
     secret_path = os.path.join(os.path.expanduser('~'), 'datazilla-secret.txt')
+    if not os.path.isfile(secret_path):
+        logger.error('could not post results to datazilla: secrets file: %s not found' % secret_path)
+        return
     with open(secret_path, 'r') as f:
         key, secret = f.read().strip().split(',')
 
