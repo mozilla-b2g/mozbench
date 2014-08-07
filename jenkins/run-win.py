@@ -22,7 +22,7 @@ subprocess.call(['venv/Scripts/python', 'setup.py', 'install'])
 #       be easily specified as part of the Jenkins job.
 FIREFOX_URL= 'http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/'
 version = firefox_version.get_firefox_version(FIREFOX_URL)
-firefox_url = FIREFOX_URL + version + '.win64-x86_64.installer.exe'
+firefox_url = FIREFOX_URL + version + '.win32.installer.exe'
 chrome_path = os.path.expanduser('~') + '/AppData/Local/Google/Chrome SxS/Application/chrome.exe'
 
 args = ['--firefox-url', firefox_url,
