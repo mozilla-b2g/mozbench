@@ -70,7 +70,7 @@ def install_firefox(logger, url):
 
     return path
 
-def runtest(logger, runner):
+def runtest(logger, runner, timeout):
     global headers
     global results
 
@@ -79,21 +79,24 @@ def runtest(logger, runner):
     runner.start()
 
     try:
-        wait.Wait(timeout=300).until(lambda: results is not None)
+        wait.Wait(timeout=timeout).until(lambda: results is not None)
     except wait.TimeoutException:
         logger.error('timed out waiting for results')
-
-    # extract browser version from user-agent
-    user_agent = headers['user-agent']
-    version = None
-    m = re.search('(Firefox/[\d\.]+|Chrome/[\d\.]+)', user_agent)
-    if m:
-        version = m.groups()[0].split('/')[1]
 
     runner.stop()
     runner.wait()
 
-    return version, copy.copy(results)
+    if results:
+        # extract browser version from user-agent
+        user_agent = headers['user-agent']
+        version = None
+        m = re.search('(Firefox/[\d\.]+|Chrome/[\d\.]+)', user_agent)
+        if m:
+            version = m.groups()[0].split('/')[1]
+
+        return version, copy.copy(results)
+    else:
+        return None, None
 
 def postresults(logger, browser, branch, version, benchmark, results):
 
@@ -170,6 +173,7 @@ def cli(args):
         suite = benchmark['suite']
         url = url_prefix + benchmark['url']
         num_runs = benchmark['number_of_runs']
+        timeout = benchmark['timeout']
         name = benchmark['name']
         value = benchmark['value']
 
@@ -186,7 +190,7 @@ def cli(args):
 
             logger.debug('firefox run %d' % i)
             runner = mozrunner.FirefoxRunner(binary=firefox_binary, cmdargs=[url])
-            version, results = runtest(logger, runner)
+            version, results = runtest(logger, runner, timeout)
             if results is None:
                 logger.error('no results found')
                 error = True
@@ -204,7 +208,7 @@ def cli(args):
         for i in xrange(0, num_runs):
             logger.debug('chrome run %d' % i)
             runner = ChromeRunner(binary=args.chrome_path, cmdargs=[url])
-            version, results = runtest(logger, runner)
+            version, results = runtest(logger, runner, timeout)
             if results is None:
                 logger.error('no results found')
                 error = True

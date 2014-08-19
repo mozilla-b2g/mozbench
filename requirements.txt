@@ -1,7 +1,7 @@
 datazilla
 mozinfo
 mozinstall
-mozlog
+mozlog == 2.2
 mozprocess
 mozrunner
 wptserve == 1.0.1

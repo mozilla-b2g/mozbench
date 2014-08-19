@@ -2,8 +2,17 @@
   {"suite": "webaudio-benchmark",
    "url": "webaudio-benchmark/index.html",
    "number_of_runs": 5,
+   "timeout": 300,
    "enabled": true,
    "name": "name",
    "value": "duration"
+  },
+  {"suite": "massive",
+   "url": "Massive/index.html?autoRun=true,postToURL=/results",
+   "number_of_runs": 3,
+   "timeout": 1000,
+   "enabled": false,
+   "name": "benchmark",
+   "value": "result"
   }
 ]

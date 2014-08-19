@@ -1,0 +1,3 @@
+[submodule "mozbench/static/Massive"]
+	path = mozbench/static/Massive
+	url = https://github.com/dminor/Massive.git
