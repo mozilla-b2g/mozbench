@@ -24,6 +24,7 @@ import time
 import urllib
 import wait
 import wptserve
+from subprocess import call
 
 headers = None
 results = None
@@ -50,20 +51,33 @@ def results_handler(request, response):
 routes = [('POST', '/results', results_handler),
           ('GET', '/*', wptserve.handlers.file_handler)]
 
+def mount_dmg(url, mountpoint):
+    call(['mkdir', mountpoint])
+    call(['hdiutil', 'attach', url,
+          '-mountpoint', mountpoint])
+
+def unmount_dmg():
+    call(['hdiutil', 'detach', 'firefox', '-force'])
+    call(['rm', '-rf', 'firefox'])
+
 def install_firefox(logger, url):
     logger.debug('installing firefox')
-
-    name, headers = urllib.urlretrieve(url, 'firefox.exe')
-
-    cmd = ['mozinstall', '-d', '.', name]
-    p = ProcessHandler(cmd)
-    p.run()
-    p.wait()
-
     path = 'firefox/firefox'
-    if mozinfo.os == 'win':
-        path = 'firefox/firefox.exe'
+    
+    if mozinfo.os == 'mac':
+        mount_dmg(url, 'firefox')
+        path = 'firefox/Firefox.app/Contents/MacOS/firefox'
+    else:
+        name, headers = urllib.urlretrieve(url, 'firefox.exe')
 
+        cmd = ['mozinstall', '-d', '.', name]
+        p = ProcessHandler(cmd)
+        p.run()
+        p.wait()
+                
+        if mozinfo.os == 'win':
+            path = 'firefox/firefox.exe'
+            
     if not os.path.isfile(path):
         logger.error('installation failed: path %s does not exist' % path)
         path = None
@@ -219,7 +233,10 @@ def cli(args):
 
         if args.post_results:
             postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
-
+    
+    if mozinfo.os == 'mac':
+        unmount_dmg()
+    
     return 0 if not error else 1
 
 if __name__ == "__main__":
