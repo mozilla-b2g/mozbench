@@ -26,9 +26,11 @@ import time
 import urllib
 import wait
 import wptserve
+from subprocess import call
 
 headers = None
 results = None
+
 
 class ChromeRunner(mozrunner.base.BaseRunner):
 
@@ -75,25 +77,52 @@ def results_handler(request, response):
 routes = [('POST', '/results', results_handler),
           ('GET', '/*', wptserve.handlers.file_handler)]
 
-def install_firefox(logger, url):
-    logger.debug('installing firefox')
 
-    name, headers = urllib.urlretrieve(url, 'firefox.exe')
-
-    cmd = ['mozinstall', '-d', '.', name]
+def run_command(cmd):
     p = ProcessHandler(cmd)
     p.run()
     p.wait()
 
-    path = 'firefox/firefox'
+    # Because p.output is a list whose only element is the path
+    # we only return that.
+    return p.output[0]
+
+def cleanup_installation():
+    # First let's get the current folder
+    folder_to_remove = os.path.abspath(os.path.dirname(__file__))
+
+    # Let's check the OS and determine which folder to remove
+    if mozinfo.os == 'mac':
+        folder_to_remove = os.path.join(folder_to_remove, 'Firefox.app')
+    else:
+        folder_to_remove = os.path.join(folder_to_remove, 'firefox')
+
+    # Remove the folder
+    cmd = ['rm', '-rf', folder_to_remove]
+    run_command(cmd)
+
+
+def install_firefox(logger, url):
+    logger.debug('installing firefox')
+    name, headers = urllib.urlretrieve(url, 'firefox.exe')
+
+    if mozinfo.os == 'mac':
+        name, headers = urllib.urlretrieve(url, 'firefox.dmg')
+
+    cmd = ['mozinstall', '-d', '.', name]
+    path = run_command(cmd)
+
     if mozinfo.os == 'win':
         path = 'firefox/firefox.exe'
+    elif mozinfo.os == 'linux':
+        path = 'firefox/firefox'
 
     if not os.path.isfile(path):
         logger.error('installation failed: path %s does not exist' % path)
         path = None
 
     return path
+
 
 def runtest(logger, runner, timeout):
     global headers
@@ -123,6 +152,7 @@ def runtest(logger, runner, timeout):
     else:
         return None, None
 
+
 def postresults(logger, browser, branch, version, benchmark, results):
 
     secret_path = os.path.join(os.path.expanduser('~'), 'datazilla-secret.txt')
@@ -146,20 +176,21 @@ def postresults(logger, browser, branch, version, benchmark, results):
         os_version = mozinfo.version,
         platform = mozinfo.processor,
         build_name = browser,
-        version = version[:2], # Chrome's version is too long for datazilla
+        version = version[:2],  # Chrome's version is too long for datazilla
         branch = branch,
         revision = version,
         id = build_id)
 
     req.add_datazilla_result(results)
     logger.debug('posting %s %s results to datazilla.mozilla.org' %
-                    (browser, version))
+                 (browser, version))
     responses = req.submit()
     for resp in responses:
         # TODO: I've seen intermitten 403 Forbidden here, we should have
         #       some retries in that case.
         logger.debug('server response: %d %s %s' %
-            (resp.status, resp.reason, resp.read()))
+                     (resp.status, resp.reason, resp.read()))
+
 
 def cli(args):
     global results
@@ -195,7 +226,7 @@ def cli(args):
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                'static'))
     httpd = wptserve.server.WebTestHttpd(host=moznetwork.get_ip(), port=8000,
-        routes=routes, doc_root=static_path)
+                                         routes=routes, doc_root=static_path)
     httpd.start()
 
     httpd_logger = logging.getLogger("wptserve")
@@ -229,7 +260,8 @@ def cli(args):
             if args.use_marionette:
                 runner = MarionetteRunner(cmdargs=[url])
             else:
-                runner = mozrunner.FirefoxRunner(binary=firefox_binary, cmdargs=[url])
+                runner = mozrunner.FirefoxRunner(binary=firefox_binary,
+                                                 cmdargs=[url])
             version, results = runtest(logger, runner, timeout)
             if results is None:
                 logger.error('no results found')
@@ -262,6 +294,9 @@ def cli(args):
 
         if args.post_results:
             postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
+
+    # Cleanup previously installed Firefox
+    cleanup_installation()
 
     return 0 if not error else 1
 
