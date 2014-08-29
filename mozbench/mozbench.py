@@ -29,6 +29,7 @@ from subprocess import call
 headers = None
 results = None
 
+
 class ChromeRunner(mozrunner.base.BaseRunner):
 
     def __init__(self, binary, cmdargs=None, **runner_args):
@@ -41,6 +42,7 @@ class ChromeRunner(mozrunner.base.BaseRunner):
     def command(self):
         return [self.binary] + self.cmdargs
 
+
 @wptserve.handlers.handler
 def results_handler(request, response):
     global headers
@@ -51,19 +53,22 @@ def results_handler(request, response):
 routes = [('POST', '/results', results_handler),
           ('GET', '/*', wptserve.handlers.file_handler)]
 
+
 def mount_dmg(url, mountpoint):
     call(['mkdir', mountpoint])
     call(['hdiutil', 'attach', url,
           '-mountpoint', mountpoint])
 
+
 def unmount_dmg():
     call(['hdiutil', 'detach', 'firefox', '-force'])
     call(['rm', '-rf', 'firefox'])
 
+
 def install_firefox(logger, url):
     logger.debug('installing firefox')
     path = 'firefox/firefox'
-    
+
     if mozinfo.os == 'mac':
         mount_dmg(url, 'firefox')
         path = 'firefox/Firefox.app/Contents/MacOS/firefox'
@@ -74,15 +79,16 @@ def install_firefox(logger, url):
         p = ProcessHandler(cmd)
         p.run()
         p.wait()
-                
+
         if mozinfo.os == 'win':
             path = 'firefox/firefox.exe'
-            
+
     if not os.path.isfile(path):
         logger.error('installation failed: path %s does not exist' % path)
         path = None
 
     return path
+
 
 def runtest(logger, runner, timeout):
     global headers
@@ -112,6 +118,7 @@ def runtest(logger, runner, timeout):
     else:
         return None, None
 
+
 def postresults(logger, browser, branch, version, benchmark, results):
 
     secret_path = os.path.join(os.path.expanduser('~'), 'datazilla-secret.txt')
@@ -135,20 +142,21 @@ def postresults(logger, browser, branch, version, benchmark, results):
         os_version = mozinfo.version,
         platform = mozinfo.processor,
         build_name = browser,
-        version = version[:2], # Chrome's version is too long for datazilla
+        version = version[:2],  # Chrome's version is too long for datazilla
         branch = branch,
         revision = version,
         id = build_id)
 
     req.add_datazilla_result(results)
     logger.debug('posting %s %s results to datazilla.mozilla.org' %
-                    (browser, version))
+                 (browser, version))
     responses = req.submit()
     for resp in responses:
         # TODO: I've seen intermitten 403 Forbidden here, we should have
         #       some retries in that case.
         logger.debug('server response: %d %s %s' %
-            (resp.status, resp.reason, resp.read()))
+                     (resp.status, resp.reason, resp.read()))
+
 
 def cli(args):
     global results
@@ -176,7 +184,7 @@ def cli(args):
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                'static'))
     httpd = wptserve.server.WebTestHttpd(host='127.0.0.1', port=8000,
-        routes=routes, doc_root=static_path)
+                                         routes=routes, doc_root=static_path)
     httpd.start()
     url_prefix = 'http://' + httpd.host + ':' + str(httpd.port) + '/'
 
@@ -203,7 +211,8 @@ def cli(args):
         for i in xrange(0, num_runs):
 
             logger.debug('firefox run %d' % i)
-            runner = mozrunner.FirefoxRunner(binary=firefox_binary, cmdargs=[url])
+            runner = mozrunner.FirefoxRunner(binary=firefox_binary,
+                                             cmdargs=[url])
             version, results = runtest(logger, runner, timeout)
             if results is None:
                 logger.error('no results found')
@@ -233,10 +242,10 @@ def cli(args):
 
         if args.post_results:
             postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
-    
+
     if mozinfo.os == 'mac':
         unmount_dmg()
-    
+
     return 0 if not error else 1
 
 if __name__ == "__main__":
