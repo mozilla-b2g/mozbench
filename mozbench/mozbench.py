@@ -54,32 +54,27 @@ routes = [('POST', '/results', results_handler),
           ('GET', '/*', wptserve.handlers.file_handler)]
 
 
-def mount_dmg(url, mountpoint):
-    call(['mkdir', mountpoint])
-    call(['hdiutil', 'attach', url,
-          '-mountpoint', mountpoint])
-
-
-def unmount_dmg():
-    call(['hdiutil', 'detach', 'firefox', '-force'])
-    call(['rm', '-rf', 'firefox'])
-
-
+def run_command(cmd):
+    p = ProcessHandler(cmd)
+    p.run()
+    p.wait()
+    
+    
 def install_firefox(logger, url):
     logger.debug('installing firefox')
     path = 'firefox/firefox'
 
-    if mozinfo.os == 'mac':
-        mount_dmg(url, 'firefox')
+    if mozinfo.os == 'mac':        
+        run_command(['mkdir', 'firefox'])
+        run_command(['hdiutil', 'attach', url, '-mountpoint', 'firefox'])
+        
         path = 'firefox/Firefox.app/Contents/MacOS/firefox'
     else:
         name, headers = urllib.urlretrieve(url, 'firefox.exe')
 
         cmd = ['mozinstall', '-d', '.', name]
-        p = ProcessHandler(cmd)
-        p.run()
-        p.wait()
-
+        run_command(cmd)
+        
         if mozinfo.os == 'win':
             path = 'firefox/firefox.exe'
 
@@ -244,7 +239,8 @@ def cli(args):
             postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
 
     if mozinfo.os == 'mac':
-        unmount_dmg()
+        run_command(['hdiutil', 'detach', 'firefox', '-force'])
+        run_command(['rm', '-rf', 'firefox'])        
 
     return 0 if not error else 1
 
