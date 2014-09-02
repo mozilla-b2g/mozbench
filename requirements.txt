@@ -4,4 +4,4 @@ mozinstall
 mozlog == 2.2
 mozprocess
 mozrunner
-wptserve == 1.0.1
+wptserve == 1.2.1
