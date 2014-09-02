@@ -58,7 +58,17 @@ def run_command(cmd):
     p = ProcessHandler(cmd)
     p.run()
     p.wait()
+
+
+def get_folder(url):    
+    folder = 'Firefox.app'
     
+    if url.find('aurora') != -1:
+        folder = 'FirefoxAurora.app'
+    elif url.find('nightly') != -1:
+        folder = 'FirefoxNightly.app'
+    
+    return folder
     
 def install_firefox(logger, url):
     logger.debug('installing firefox')
@@ -68,7 +78,8 @@ def install_firefox(logger, url):
         run_command(['mkdir', 'firefox'])
         run_command(['hdiutil', 'attach', url, '-mountpoint', 'firefox'])
         
-        path = 'firefox/Firefox.app/Contents/MacOS/firefox'
+        folder = get_folder(url)
+        path = 'firefox/' + folder + '/Contents/MacOS/firefox'
     else:
         name, headers = urllib.urlretrieve(url, 'firefox.exe')
 
