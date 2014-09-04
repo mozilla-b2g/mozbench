@@ -14,5 +14,13 @@
    "enabled": true,
    "name": "benchmark",
    "value": "result"
+  },
+  {"suite": "webglperf",
+   "url": "WebGLPerf/index.html",
+   "number_of_runs": 5,
+   "timeout": 300,
+   "enabled": true,
+   "name": "name",
+   "value": "result"
   }
 ]
