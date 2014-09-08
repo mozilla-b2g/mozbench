@@ -109,6 +109,8 @@
         results.push({'name': testPageURLs[i],
                       'result': testsRun[i].testResult});
     }
+    results.push({'name': 'Result (Geometric Average)',
+                  'result': Math.round(100 * Math.exp(sumOfLogResults / numberOfResults)) / 100});
 
     var xmlHttp = new XMLHttpRequest();
     xmlHttp.open("POST", "/results", true);
