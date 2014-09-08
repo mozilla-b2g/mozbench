@@ -164,6 +164,10 @@ def cli(args):
     httpd = wptserve.server.WebTestHttpd(host='127.0.0.1', port=8000,
         routes=routes, doc_root=static_path)
     httpd.start()
+
+    httpd_logger = logging.getLogger("wptserve")
+    httpd_logger.setLevel(logging.ERROR)
+
     url_prefix = 'http://' + httpd.host + ':' + str(httpd.port) + '/'
 
     with open(os.path.join(os.path.dirname(__file__), 'benchmarks.json')) as f:
