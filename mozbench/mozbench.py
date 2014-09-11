@@ -145,7 +145,7 @@ def cli(args):
     parser.add_argument('--firefox-url', help='url to firefox installer',
                         required=True)
     parser.add_argument('--chrome-path', help='path to chrome executable',
-                        required=True)
+                        default=None)
     parser.add_argument('--post-results', action='store_true',
                         help='if specified, post results to datazilla')
     commandline.add_logging_group(parser)
@@ -206,7 +206,10 @@ def cli(args):
         if args.post_results:
             postresults(logger, 'firefox', 'nightly', version, benchmark, dzres)
 
-        # Run chrome
+        # Run chrome (if desired)
+        if args.chrome_path is None:
+            continue
+
         dzres = DatazillaResult()
         dzres.add_testsuite(suite)
         for i in xrange(0, num_runs):
