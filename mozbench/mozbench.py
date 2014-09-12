@@ -64,6 +64,21 @@ def run_command(cmd):
     return p.output[0]
 
   
+def cleanup_installation():
+  # First let's get the current folder
+  folder_to_remove = os.path.abspath(os.path.dirname(__file__))
+  
+  # Let's check the OS and determine which folder to remove
+  if mozinfo.os == 'mac':
+    folder_to_remove = os.path.join(folder_to_remove, 'Firefox.app')
+  else:
+    folder_to_remove = os.path.join(folder_to_remove, 'firefox')
+  
+  # Remove the folder
+  cmd = ['rm', '-rf', folder_to_remove]
+  run_command(cmd)
+
+
 def install_firefox(logger, url):
     logger.debug('installing firefox')    
     name, headers = urllib.urlretrieve(url, 'firefox.exe')
@@ -82,7 +97,7 @@ def install_firefox(logger, url):
     if not os.path.isfile(path):
         logger.error('installation failed: path %s does not exist' % path)
         path = None
-
+        
     return path
 
 
@@ -238,12 +253,12 @@ def cli(args):
 
         if args.post_results:
             postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
-
-    if mozinfo.os == 'mac':
-        run_command(['hdiutil', 'detach', 'firefox', '-force'])
-        run_command(['rm', '-rf', 'firefox'])        
-
+    
+    # Cleanup previously installed Firefox
+    cleanup_installation()
+    
     return 0 if not error else 1
 
 if __name__ == "__main__":
     exit(cli(sys.argv[1:]))
+    
