@@ -58,6 +58,8 @@ def run_command(cmd):
     p = ProcessHandler(cmd)
     p.run()
     p.wait()
+    
+    return p.output
 
 
 def get_folder(url):    
