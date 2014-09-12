@@ -58,46 +58,46 @@ def run_command(cmd):
     p = ProcessHandler(cmd)
     p.run()
     p.wait()
-    
+
     # Because p.output is a list whose only element is the path
     # we only return that.
     return p.output[0]
 
-  
+
 def cleanup_installation():
-  # First let's get the current folder
-  folder_to_remove = os.path.abspath(os.path.dirname(__file__))
-  
-  # Let's check the OS and determine which folder to remove
-  if mozinfo.os == 'mac':
-    folder_to_remove = os.path.join(folder_to_remove, 'Firefox.app')
-  else:
-    folder_to_remove = os.path.join(folder_to_remove, 'firefox')
-  
-  # Remove the folder
-  cmd = ['rm', '-rf', folder_to_remove]
-  run_command(cmd)
+    # First let's get the current folder
+    folder_to_remove = os.path.abspath(os.path.dirname(__file__))
+
+    # Let's check the OS and determine which folder to remove
+    if mozinfo.os == 'mac':
+        folder_to_remove = os.path.join(folder_to_remove, 'Firefox.app')
+    else:
+        folder_to_remove = os.path.join(folder_to_remove, 'firefox')
+
+    # Remove the folder
+    cmd = ['rm', '-rf', folder_to_remove]
+    run_command(cmd)
 
 
 def install_firefox(logger, url):
-    logger.debug('installing firefox')    
+    logger.debug('installing firefox')
     name, headers = urllib.urlretrieve(url, 'firefox.exe')
-    
+
     if mozinfo.os == 'mac':
-      name, headers = urllib.urlretrieve(url, 'firefox.dmg')            
+        name, headers = urllib.urlretrieve(url, 'firefox.dmg')
 
     cmd = ['mozinstall', '-d', '.', name]
     path = run_command(cmd)
-    
+
     if mozinfo.os == 'win':
-      path = 'firefox/firefox.exe'
+        path = 'firefox/firefox.exe'
     elif mozinfo.os == 'linux':
-      path = 'firefox/firefox'
-        
+        path = 'firefox/firefox'
+
     if not os.path.isfile(path):
         logger.error('installation failed: path %s does not exist' % path)
         path = None
-        
+
     return path
 
 
@@ -253,12 +253,11 @@ def cli(args):
 
         if args.post_results:
             postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
-    
+
     # Cleanup previously installed Firefox
     cleanup_installation()
-    
+
     return 0 if not error else 1
 
 if __name__ == "__main__":
     exit(cli(sys.argv[1:]))
-    
