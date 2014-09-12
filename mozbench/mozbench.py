@@ -63,17 +63,7 @@ def run_command(cmd):
     # we only return that.
     return p.output[0]
 
-
-def get_folder(url):    
-    folder = 'Firefox.app'
-    
-    if url.find('aurora') != -1:
-        folder = 'FirefoxAurora.app'
-    elif url.find('nightly') != -1:
-        folder = 'FirefoxNightly.app'
-    
-    return folder
-    
+  
 def install_firefox(logger, url):
     logger.debug('installing firefox')    
     name, headers = '', ''
