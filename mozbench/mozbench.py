@@ -59,7 +59,9 @@ def run_command(cmd):
     p.run()
     p.wait()
     
-    return p.output
+    # Because p.output is a list whose only element is the path
+    # we only return that.
+    return p.output[0]
 
 
 def get_folder(url):    
@@ -73,24 +75,17 @@ def get_folder(url):
     return folder
     
 def install_firefox(logger, url):
-    logger.debug('installing firefox')
-    path = 'firefox/firefox'
+    logger.debug('installing firefox')    
+    name, headers = '', ''
+    
+    if mozinfo.os == 'mac':
+      name, headers = urllib.urlretrieve(url, 'firefox.dmg')      
+    elif mozinfo.os == 'win':
+      name, headers = urllib.urlretrieve(url, 'firefox.exe')      
 
-    if mozinfo.os == 'mac':        
-        run_command(['mkdir', 'firefox'])
-        run_command(['hdiutil', 'attach', url, '-mountpoint', 'firefox'])
+    cmd = ['mozinstall', '-d', '.', name]
+    path = run_command(cmd)   
         
-        folder = get_folder(url)
-        path = 'firefox/' + folder + '/Contents/MacOS/firefox'
-    else:
-        name, headers = urllib.urlretrieve(url, 'firefox.exe')
-
-        cmd = ['mozinstall', '-d', '.', name]
-        run_command(cmd)
-        
-        if mozinfo.os == 'win':
-            path = 'firefox/firefox.exe'
-
     if not os.path.isfile(path):
         logger.error('installation failed: path %s does not exist' % path)
         path = None
