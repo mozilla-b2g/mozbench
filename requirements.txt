@@ -1,7 +1,9 @@
 datazilla
+marionette_client == 0.7.10
 mozinfo
 mozinstall
 mozlog == 2.2
+moznetwork
 mozprocess
 mozrunner
 wptserve == 1.2.1

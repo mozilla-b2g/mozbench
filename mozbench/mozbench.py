@@ -7,6 +7,7 @@ import copy
 from dzclient import DatazillaRequest, DatazillaResult
 import json
 import logging
+import marionette
 import mozinfo
 from mozlog.structured import (
     commandline,
@@ -14,6 +15,7 @@ from mozlog.structured import (
     handlers,
     structuredlog,
 )
+import moznetwork
 from mozprocess import ProcessHandler
 import mozrunner
 import os
@@ -39,6 +41,29 @@ class ChromeRunner(mozrunner.base.BaseRunner):
     @property
     def command(self):
         return [self.binary] + self.cmdargs
+
+class MarionetteRunner(object):
+
+    def __init__(self, cmdargs=None):
+        self.cmdargs = cmdargs or []
+
+    def start(self):
+        cmd = ['adb', 'forward', 'tcp:2828', 'tcp:2828']
+        p = ProcessHandler(cmd)
+        p.run()
+        p.wait()
+
+        m = marionette.Marionette('localhost', 2828)
+        m.start_session()
+        print('navigating to: %s' % self.cmdargs[0])
+        m.navigate(self.cmdargs[0])
+        m.delete_session()
+
+    def stop(self):
+        pass
+
+    def wait(self):
+        pass
 
 @wptserve.handlers.handler
 def results_handler(request, response):
@@ -143,7 +168,9 @@ def cli(args):
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--firefox-url', help='url to firefox installer',
-                        required=True)
+                        default=None)
+    parser.add_argument('--use-marionette', action='store_true',
+                        help='Use marionette to run tests on firefox os')
     parser.add_argument('--chrome-path', help='path to chrome executable',
                         default=None)
     parser.add_argument('--post-results', action='store_true',
@@ -154,14 +181,20 @@ def cli(args):
     logging.basicConfig()
     logger = commandline.setup_logging('mozbench', vars(args), {})
 
-    firefox_binary = install_firefox(logger, args.firefox_url)
-    if firefox_binary is None:
+    if not args.use_marionette and not args.firefox_url:
+        logger.error('you must specify one of --use-marionette or --firefox-url')
         return 1
+
+    # install firefox (if necessary)
+    if args.firefox_url:
+        firefox_binary = install_firefox(logger, args.firefox_url)
+        if firefox_binary is None:
+            return 1
 
     logger.debug('starting webserver')
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                'static'))
-    httpd = wptserve.server.WebTestHttpd(host='127.0.0.1', port=8000,
+    httpd = wptserve.server.WebTestHttpd(host=moznetwork.get_ip(), port=8000,
         routes=routes, doc_root=static_path)
     httpd.start()
 
@@ -193,7 +226,10 @@ def cli(args):
         for i in xrange(0, num_runs):
 
             logger.debug('firefox run %d' % i)
-            runner = mozrunner.FirefoxRunner(binary=firefox_binary, cmdargs=[url])
+            if args.use_marionette:
+                runner = MarionetteRunner(cmdargs=[url])
+            else:
+                runner = mozrunner.FirefoxRunner(binary=firefox_binary, cmdargs=[url])
             version, results = runtest(logger, runner, timeout)
             if results is None:
                 logger.error('no results found')
