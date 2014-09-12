@@ -66,15 +66,18 @@ def run_command(cmd):
   
 def install_firefox(logger, url):
     logger.debug('installing firefox')    
-    name, headers = '', ''
+    name, headers = urllib.urlretrieve(url, 'firefox.exe')
     
     if mozinfo.os == 'mac':
-      name, headers = urllib.urlretrieve(url, 'firefox.dmg')      
-    elif mozinfo.os == 'win':
-      name, headers = urllib.urlretrieve(url, 'firefox.exe')      
+      name, headers = urllib.urlretrieve(url, 'firefox.dmg')            
 
     cmd = ['mozinstall', '-d', '.', name]
-    path = run_command(cmd)   
+    path = run_command(cmd)
+    
+    if mozinfo.os == 'win':
+      path = 'firefox/firefox.exe'
+    elif mozinfo.os == 'linux':
+      path = 'firefox/firefox'
         
     if not os.path.isfile(path):
         logger.error('installation failed: path %s does not exist' % path)
