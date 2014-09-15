@@ -27,6 +27,7 @@ import urllib
 import wait
 import wptserve
 from subprocess import call
+from shutil import rmtree
 
 headers = None
 results = None
@@ -81,10 +82,10 @@ routes = [('POST', '/results', results_handler),
 def run_command(cmd):
     p = ProcessHandler(cmd)
     p.run()
-    p.wait()
+    p.wait()    
     return p.output
 
-def cleanup_installation():
+def cleanup_installation(firefox_binary):
     # First let's get the current folder
     folder_to_remove = os.path.abspath(os.path.dirname(__file__))
 
@@ -214,6 +215,7 @@ def cli(args):
         return 1
 
     # install firefox (if necessary)
+    firefox_binary = None
     if args.firefox_url:
         firefox_binary = install_firefox(logger, args.firefox_url)
         if firefox_binary is None:
@@ -293,7 +295,7 @@ def cli(args):
             postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
 
     # Cleanup previously installed Firefox
-    cleanup_installation()
+    cleanup_installation(firefox_binary)
 
     return 0 if not error else 1
 
