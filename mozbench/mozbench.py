@@ -82,7 +82,7 @@ routes = [('POST', '/results', results_handler),
 def run_command(cmd):
     p = ProcessHandler(cmd)
     p.run()
-    p.wait()    
+    p.wait()
     return p.output
 
 def cleanup_installation(firefox_binary):
@@ -102,10 +102,12 @@ def cleanup_installation(firefox_binary):
 
 def install_firefox(logger, url):
     logger.debug('installing firefox')
-    name, headers = urllib.urlretrieve(url, 'firefox.exe')
+    name, headers = '', ''
 
     if mozinfo.os == 'mac':
         name, headers = urllib.urlretrieve(url, 'firefox.dmg')
+    else:
+      name, headers = urllib.urlretrieve(url, 'firefox.exe')
 
     cmd = ['mozinstall', '-d', '.', name]
     path = run_command(cmd)[0]
