@@ -82,10 +82,7 @@ def run_command(cmd):
     p = ProcessHandler(cmd)
     p.run()
     p.wait()
-
-    # Because p.output is a list whose only element is the path
-    # we only return that.
-    return p.output[0]
+    return p.output
 
 def cleanup_installation():
     # First let's get the current folder
@@ -110,7 +107,7 @@ def install_firefox(logger, url):
         name, headers = urllib.urlretrieve(url, 'firefox.dmg')
 
     cmd = ['mozinstall', '-d', '.', name]
-    path = run_command(cmd)
+    path = run_command(cmd)[0]
 
     if mozinfo.os == 'win':
         path = 'firefox/firefox.exe'
