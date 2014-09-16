@@ -85,20 +85,26 @@ def run_command(cmd):
     p.wait()
     return p.output
 
-def cleanup_installation(firefox_binary):
-    # First let's get the current folder
-    folder_to_remove = os.path.abspath(os.path.dirname(__file__))
+def cleanup_installation(logger, firefox_binary):
+    folder_to_remove = ''
+    file_to_remove = ''
 
-    # Let's check the OS and determine which folder to remove
+    # Let's check the OS and determine which folder and file to remove
     if mozinfo.os == 'mac':
         folder_to_remove = os.path.join(folder_to_remove, 'Firefox.app')
     else:
-        folder_to_remove = os.path.join(folder_to_remove, 'firefox')
+        folder_to_remove = os.path.dirname(firefox_binary)
+        file_to_remove = os.path.join(os.path.dirname(folder_to_remove),
+                                      'firefox.exe')
 
-    # Remove the folder
-    cmd = ['rm', '-rf', folder_to_remove]
-    run_command(cmd)
-
+    try:
+        # Remove the folder
+        rmtree(folder_to_remove)
+        # Remove the file
+        os.remove(file_to_remove)
+    except OSError as e:
+        # We tried to remove a folder/file that did not exist
+        logger.error(e)
 
 def install_firefox(logger, url):
     logger.debug('installing firefox')
@@ -292,7 +298,7 @@ def cli(args):
             postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
 
     # Cleanup previously installed Firefox
-    cleanup_installation(firefox_binary)
+    cleanup_installation(logger, firefox_binary)
 
     return 0 if not error else 1
 
