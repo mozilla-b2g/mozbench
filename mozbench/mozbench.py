@@ -85,13 +85,17 @@ def run_command(cmd):
     p.wait()
     return p.output
 
+
 def cleanup_installation(logger, firefox_binary):
     folder_to_remove = ''
     file_to_remove = ''
 
     # Let's check the OS and determine which folder and file to remove
     if mozinfo.os == 'mac':
-        folder_to_remove = os.path.join(folder_to_remove, 'Firefox.app')
+        folder_to_remove = os.path.dirname(os.path.dirname(os.path.dirname(
+                                                           firefox_binary)))
+        file_to_remove = os.path.join(os.path.dirname(folder_to_remove),
+                                      'firefox.dmg')
     else:
         folder_to_remove = os.path.dirname(firefox_binary)
         file_to_remove = os.path.join(os.path.dirname(folder_to_remove),
@@ -113,7 +117,7 @@ def install_firefox(logger, url):
     if mozinfo.os == 'mac':
         name, headers = urllib.urlretrieve(url, 'firefox.dmg')
     else:
-      name, headers = urllib.urlretrieve(url, 'firefox.exe')
+        name, headers = urllib.urlretrieve(url, 'firefox.exe')
 
     cmd = ['mozinstall', '-d', '.', name]
     path = run_command(cmd)[0]
