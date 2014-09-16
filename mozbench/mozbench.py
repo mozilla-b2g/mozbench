@@ -112,11 +112,6 @@ def install_firefox(logger, url):
     cmd = ['mozinstall', '-d', '.', name]
     path = run_command(cmd)[0]
 
-    if mozinfo.os == 'win':
-        path = 'firefox/firefox.exe'
-    elif mozinfo.os == 'linux':
-        path = 'firefox/firefox'
-
     if not os.path.isfile(path):
         logger.error('installation failed: path %s does not exist' % path)
         path = None
