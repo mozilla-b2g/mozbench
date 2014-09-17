@@ -27,6 +27,7 @@ import urllib
 import wait
 import wptserve
 from subprocess import call
+from shutil import rmtree
 
 headers = None
 results = None
@@ -84,35 +85,42 @@ def run_command(cmd):
     p.wait()
     return p.output
 
-def cleanup_installation():
-    # First let's get the current folder
-    folder_to_remove = os.path.abspath(os.path.dirname(__file__))
 
-    # Let's check the OS and determine which folder to remove
+def cleanup_installation(logger, firefox_binary):
+    folder_to_remove = ''
+    file_to_remove = ''
+
+    # Let's check the OS and determine which folder and file to remove
     if mozinfo.os == 'mac':
-        folder_to_remove = os.path.join(folder_to_remove, 'Firefox.app')
+        folder_to_remove = os.path.dirname(os.path.dirname(os.path.dirname(
+                                                           firefox_binary)))
+        file_to_remove = os.path.join(os.path.dirname(folder_to_remove),
+                                      'firefox.dmg')
     else:
-        folder_to_remove = os.path.join(folder_to_remove, 'firefox')
+        folder_to_remove = os.path.dirname(firefox_binary)
+        file_to_remove = os.path.join(os.path.dirname(folder_to_remove),
+                                      'firefox.exe')
 
-    # Remove the folder
-    cmd = ['rm', '-rf', folder_to_remove]
-    run_command(cmd)
-
+    try:
+        # Remove the folder
+        rmtree(folder_to_remove)
+        # Remove the file
+        os.remove(file_to_remove)
+    except OSError as e:
+        # We tried to remove a folder/file that did not exist
+        logger.error(e)
 
 def install_firefox(logger, url):
     logger.debug('installing firefox')
-    name, headers = urllib.urlretrieve(url, 'firefox.exe')
+    name, headers = '', ''
 
     if mozinfo.os == 'mac':
         name, headers = urllib.urlretrieve(url, 'firefox.dmg')
+    else:
+        name, headers = urllib.urlretrieve(url, 'firefox.exe')
 
     cmd = ['mozinstall', '-d', '.', name]
     path = run_command(cmd)[0]
-
-    if mozinfo.os == 'win':
-        path = 'firefox/firefox.exe'
-    elif mozinfo.os == 'linux':
-        path = 'firefox/firefox'
 
     if not os.path.isfile(path):
         logger.error('installation failed: path %s does not exist' % path)
@@ -214,6 +222,7 @@ def cli(args):
         return 1
 
     # install firefox (if necessary)
+    firefox_binary = None
     if args.firefox_url:
         firefox_binary = install_firefox(logger, args.firefox_url)
         if firefox_binary is None:
@@ -293,7 +302,7 @@ def cli(args):
             postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
 
     # Cleanup previously installed Firefox
-    cleanup_installation()
+    cleanup_installation(logger, firefox_binary)
 
     return 0 if not error else 1
 
