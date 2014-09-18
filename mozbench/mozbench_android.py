@@ -18,11 +18,15 @@ def cli(args):
     logging.basicConfig()
     logger = commandline.setup_logging('mozbench-android', vars(args), {})
 
+    # Check if we have any device connected
     adb_host = mozdevice.ADBHost()
     devices = adb_host.devices()
     if not devices:
         logger.error('No devices found')
         return 1
+
+    # Connect to the device
+    device = mozdevice.ADBAndroid(None)
 
 
 if __name__ == '__main__':
