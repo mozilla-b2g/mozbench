@@ -7,3 +7,4 @@ moznetwork
 mozprocess
 mozrunner
 wptserve == 1.2.1
+mozdevice == 0.40
