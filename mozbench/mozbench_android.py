@@ -26,7 +26,10 @@ def cli(args):
         return 1
 
     # Connect to the device
-    device = mozdevice.ADBAndroid(None)
+    device = mozdevice.ADBAndroid(None)    
+
+    # Install Firefox apk
+    device.install_app('/home/rcastro/Downloads/fennec-35.0a1.multi.android-arm.apk')
 
 
 if __name__ == '__main__':
