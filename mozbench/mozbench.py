@@ -233,6 +233,8 @@ def cli(args):
                         default=None)
     parser.add_argument('--use-marionette', action='store_true',
                         help='Use marionette to run tests on firefox os')
+    parser.add_argument('--use-android', action='store_true',
+                        help='Use AndroidRunner to run tests on Android')
     parser.add_argument('--chrome-path', help='path to chrome executable',
                         default=None)
     parser.add_argument('--post-results', action='store_true',
