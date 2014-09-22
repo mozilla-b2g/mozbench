@@ -9,6 +9,7 @@ import json
 import logging
 import marionette
 import mozinfo
+import mozdevice
 from mozlog.structured import (
     commandline,
     formatters,
@@ -82,7 +83,7 @@ class AndroidRunner(object):
 
     def wait(self):
         pass
-        
+
 
 @wptserve.handlers.handler
 def results_handler(request, response):
