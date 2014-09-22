@@ -76,7 +76,16 @@ class AndroidRunner(object):
         self.cmdargs = cmdargs or []
 
     def start(self):
-        pass
+
+        # Check if we have any device connected
+        adb_host = mozdevice.ADBHost()
+        devices = adb_host.devices()
+        if not devices:
+            print('No devices found')
+            return 1
+
+        # Connect to the device
+        device = mozdevice.ADBAndroid(None)
 
     def stop(self):
         pass
