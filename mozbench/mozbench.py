@@ -87,6 +87,12 @@ class AndroidRunner(object):
         # Connect to the device
         device = mozdevice.ADBAndroid(None)
 
+        # Fetch Fennec
+        name, headers = urllib.urlretrieve(self.cmdargs[0], 'fennec.apk')
+        
+        # Install Fennec
+        device.install_app(name)
+
     def stop(self):
         pass
 
@@ -252,7 +258,7 @@ def cli(args):
 
     # install firefox (if necessary)
     firefox_binary = None
-    if args.firefox_url:
+    if args.firefox_url and not args.use_android:
         firefox_binary = install_firefox(logger, args.firefox_url)
         if firefox_binary is None:
             return 1
@@ -294,6 +300,8 @@ def cli(args):
             logger.debug('firefox run %d' % i)
             if args.use_marionette:
                 runner = MarionetteRunner(cmdargs=[url])
+            elif args.use_android:
+                runner = AndroidRunner(cmdargs=[args.firefox_url])
             else:
                 runner = mozrunner.FirefoxRunner(binary=firefox_binary,
                                                  cmdargs=[url])
