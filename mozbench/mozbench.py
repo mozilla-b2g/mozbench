@@ -68,6 +68,22 @@ class MarionetteRunner(object):
     def wait(self):
         pass
 
+
+class AndroidRunner(object):
+
+    def __init__(self, cmdargs=None):
+        self.cmdargs = cmdargs or []
+
+    def start(self):
+        pass
+
+    def stop(self):
+        pass
+
+    def wait(self):
+        pass
+        
+
 @wptserve.handlers.handler
 def results_handler(request, response):
     global headers
