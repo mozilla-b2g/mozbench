@@ -70,10 +70,13 @@ class MarionetteRunner(object):
         pass
 
 
-class AndroidFennecRunner(object):
+class AndroidRunner(object):
 
-    def __init__(self, cmdargs=None):
-        self.cmdargs = cmdargs or []
+    def __init__(self, app_name, activity_name, intent, url):
+        self.app_name = app_name
+        self.activity_name = activity_name
+        self.intent = intent
+        self.url = url
         self.device = None
 
     def start(self):
@@ -89,45 +92,17 @@ class AndroidFennecRunner(object):
         self.device = mozdevice.ADBAndroid(None)
 
         # Laungh Fennec
-        self.device.launch_fennec(app_name='org.mozilla.fennec',
-                                  url=self.cmdargs[0])
+        self.device.launch_application(app_name=self.app_name,
+                                       activity_name=self.activity_name,
+                                       intent=self.intent,
+                                       url=self.url)
 
     def stop(self):
-        self.device.stop_application(app_name='org.mozilla.fennec')
+        self.device.stop_application(app_name=self.app_name)
 
     def wait(self):
         pass
 
-
-class AndroidChromeRunner(object):
-
-    def __init__(self, cmdargs=None):
-        self.cmdargs = cmdargs or []
-        self.device = None
-
-    def start(self):
-
-        # Check if we have any device connected
-        adb_host = mozdevice.ADBHost()
-        devices = adb_host.devices()
-        if not devices:
-            print('No devices found')
-            return 1
-
-        # Connect to the device
-        self.device = mozdevice.ADBAndroid(None)
-
-        # Laungh Fennec
-        self.device.launch_application(app_name='com.android.chrome',
-                                       activity_name='.Main',
-                                       intent='android.intent.action.VIEW',
-                                       url=self.cmdargs[0])
-
-    def stop(self):
-        self.device.stop_application(app_name='com.android.chrome')
-
-    def wait(self):
-        pass
 
 @wptserve.handlers.handler
 def results_handler(request, response):
@@ -304,7 +279,7 @@ def cli(args):
         logger.error('you must specify one of --use-marionette or ' +
                      '-- user-android  or --firefox-url')
         return 1
-    
+
     # install firefox (if necessary)
     firefox_binary = None
     if args.firefox_url:
@@ -353,7 +328,11 @@ def cli(args):
             if args.use_marionette:
                 runner = MarionetteRunner(cmdargs=[url])
             elif args.use_android:
-                runner = AndroidFennecRunner(cmdargs=[url])
+                #runner = AndroidFennecRunner(cmdargs=[url])
+                runner = AndroidRunner(app_name='org.mozilla.fennec',
+                                       activity_name='.App',
+                                       intent='android.intent.action.VIEW',
+                                       url=url)
             else:
                 runner = mozrunner.FirefoxRunner(binary=firefox_binary,
                                                  cmdargs=[url])
@@ -379,7 +358,10 @@ def cli(args):
             logger.debug('chrome run %d' % i)
 
             if args.use_android:
-                runner = AndroidChromeRunner(cmdargs=[url])
+                runner = AndroidRunner(app_name='com.android.chrome',
+                                       activity_name='.Main',
+                                       intent='android.intent.action.VIEW',
+                                       url=url)
             else:
                 runner = ChromeRunner(binary=args.chrome_path, cmdargs=[url])
 
