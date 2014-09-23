@@ -70,7 +70,7 @@ class MarionetteRunner(object):
         pass
 
 
-class AndroidRunner(object):
+class AndroidFennecRunner(object):
 
     def __init__(self, cmdargs=None):
         self.cmdargs = cmdargs or []
@@ -323,7 +323,7 @@ def cli(args):
             if args.use_marionette:
                 runner = MarionetteRunner(cmdargs=[url])
             elif args.use_android:
-                runner = AndroidRunner(cmdargs=[url])
+                runner = AndroidFennecRunner(cmdargs=[url])
             else:
                 runner = mozrunner.FirefoxRunner(binary=firefox_binary,
                                                  cmdargs=[url])
