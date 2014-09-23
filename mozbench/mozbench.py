@@ -74,6 +74,7 @@ class AndroidRunner(object):
 
     def __init__(self, cmdargs=None):
         self.cmdargs = cmdargs or []
+        self.device = None
 
     def start(self):
 
@@ -85,13 +86,14 @@ class AndroidRunner(object):
             return 1
 
         # Connect to the device
-        device = mozdevice.ADBAndroid(None)
-        
+        self.device = mozdevice.ADBAndroid(None)
+
         # Laungh Fennec
-        device.launch_fennec(app_name='org.mozilla.fennec', url=self.cmdargs[0])
+        self.device.launch_fennec(app_name='org.mozilla.fennec',
+                                  url=self.cmdargs[0])
 
     def stop(self):
-        pass
+        self.device.stop_application(app_name='org.mozilla.fennec')
 
     def wait(self):
         pass
