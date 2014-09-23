@@ -86,9 +86,9 @@ class AndroidRunner(object):
 
         # Connect to the device
         device = mozdevice.ADBAndroid(None)
-
+        
         # Laungh Fennec
-        device.launch_fennec("org.mozilla.fennec")
+        device.launch_fennec(app_name='org.mozilla.fennec', url=self.cmdargs[0])
 
     def stop(self):
         pass
@@ -321,7 +321,7 @@ def cli(args):
             if args.use_marionette:
                 runner = MarionetteRunner(cmdargs=[url])
             elif args.use_android:
-                runner = AndroidRunner(cmdargs=[args.firefox_url])
+                runner = AndroidRunner(cmdargs=[url])
             else:
                 runner = mozrunner.FirefoxRunner(binary=firefox_binary,
                                                  cmdargs=[url])
