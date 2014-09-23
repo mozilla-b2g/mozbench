@@ -87,6 +87,9 @@ class AndroidRunner(object):
         # Connect to the device
         device = mozdevice.ADBAndroid(None)
 
+        # Laungh Fennec
+        device.launch_fennec("org.mozilla.fennec")
+
     def stop(self):
         pass
 
