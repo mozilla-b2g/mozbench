@@ -258,7 +258,6 @@ def cli(args):
         logger.debug('starting benchmark: %s' % suite)
 
         # Run firefox
-        error = False
         dzres = DatazillaResult()
         dzres.add_testsuite(suite)
         for i in xrange(0, num_runs):
@@ -285,7 +284,6 @@ def cli(args):
         if args.chrome_path is None:
             continue
 
-        error = False
         dzres = DatazillaResult()
         dzres.add_testsuite(suite)
         for i in xrange(0, num_runs):
