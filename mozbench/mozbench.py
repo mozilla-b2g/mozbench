@@ -122,7 +122,17 @@ def run_command(cmd):
     return p.output
 
 
-def cleanup_installation(logger, firefox_binary):
+def cleanup_android():
+    pass
+
+
+def cleanup_installation(logger, firefox_binary, use_android=None):
+
+    # Check if we're dealing with an Android device
+    if use_android:
+        cleanup_anroid()
+        return
+
     folder_to_remove = ''
     file_to_remove = ''
 
@@ -378,7 +388,7 @@ def cli(args):
             postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
 
     # Cleanup previously installed Firefox
-    cleanup_installation(logger, firefox_binary)
+    cleanup_installation(logger, firefox_binary, args.use_android)
 
     return 0 if not error else 1
 
