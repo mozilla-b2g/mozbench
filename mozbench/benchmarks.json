@@ -19,7 +19,7 @@
    "url": "WebGLPerf/index.html",
    "number_of_runs": 5,
    "timeout": 300,
-   "enabled": true,
+   "enabled": false,
    "name": "name",
    "value": "result"
   }
