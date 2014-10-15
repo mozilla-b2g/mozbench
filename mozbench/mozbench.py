@@ -9,6 +9,7 @@ import json
 import logging
 import marionette
 import mozinfo
+import mozdevice
 from mozlog.structured import (
     commandline,
     formatters,
@@ -68,6 +69,41 @@ class MarionetteRunner(object):
     def wait(self):
         pass
 
+
+class AndroidRunner(object):
+
+    def __init__(self, app_name, activity_name, intent, url):
+        self.app_name = app_name
+        self.activity_name = activity_name
+        self.intent = intent
+        self.url = url
+        self.device = None
+
+    def start(self):
+
+        # Check if we have any device connected
+        adb_host = mozdevice.ADBHost()
+        devices = adb_host.devices()
+        if not devices:
+            print('No devices found')
+            return 1
+
+        # Connect to the device
+        self.device = mozdevice.ADBAndroid(None)
+
+        # Laungh Fennec
+        self.device.launch_application(app_name=self.app_name,
+                                       activity_name=self.activity_name,
+                                       intent=self.intent,
+                                       url=self.url)
+
+    def stop(self):
+        self.device.stop_application(app_name=self.app_name)
+
+    def wait(self):
+        pass
+
+
 @wptserve.handlers.handler
 def results_handler(request, response):
     global headers
@@ -86,7 +122,23 @@ def run_command(cmd):
     return p.output
 
 
-def cleanup_installation(logger, firefox_binary):
+def cleanup_android():
+    # Connect to the device
+    device = mozdevice.ADBAndroid(None)
+
+    # Laungh Fennec
+    device.uninstall_app(app_name='org.mozilla.fennec')
+
+    # Remove APK
+    os.remove('fennec.apk')
+
+def cleanup_installation(logger, firefox_binary, use_android=None):
+
+    # Check if we're dealing with an Android device
+    if use_android:
+        cleanup_android()
+        return
+
     folder_to_remove = ''
     file_to_remove = ''
 
@@ -109,6 +161,26 @@ def cleanup_installation(logger, firefox_binary):
     except OSError as e:
         # We tried to remove a folder/file that did not exist
         logger.error(e)
+
+
+def install_fennec(url):
+
+    # Check if we have any device connected
+    adb_host = mozdevice.ADBHost()
+    devices = adb_host.devices()
+    if not devices:
+        print('No devices found')
+        return 1
+
+    # Connect to the device
+    device = mozdevice.ADBAndroid(None)
+
+    # Fetch Fennec
+    name, headers = urllib.urlretrieve(url, 'fennec.apk')
+
+    # Install Fennec
+    device.install_app(name)
+
 
 def install_firefox(logger, url):
     logger.debug('installing firefox')
@@ -207,6 +279,8 @@ def cli(args):
                         default=None)
     parser.add_argument('--use-marionette', action='store_true',
                         help='Use marionette to run tests on firefox os')
+    parser.add_argument('--use-android', action='store_true',
+                        help='Use AndroidRunner to run tests on Android')
     parser.add_argument('--chrome-path', help='path to chrome executable',
                         default=None)
     parser.add_argument('--post-results', action='store_true',
@@ -217,16 +291,20 @@ def cli(args):
     logging.basicConfig()
     logger = commandline.setup_logging('mozbench', vars(args), {})
 
-    if not args.use_marionette and not args.firefox_url:
-        logger.error('you must specify one of --use-marionette or --firefox-url')
+    if not args.use_marionette and not args.use_android and not args.firefox_url:
+        logger.error('you must specify one of --use-marionette or ' +
+                     '-- user-android  or --firefox-url')
         return 1
 
     # install firefox (if necessary)
     firefox_binary = None
     if args.firefox_url:
-        firefox_binary = install_firefox(logger, args.firefox_url)
-        if firefox_binary is None:
-            return 1
+        if args.use_android:
+            install_fennec(args.firefox_url)
+        else:
+            firefox_binary = install_firefox(logger, args.firefox_url)
+            if firefox_binary is None:
+                return 1
 
     logger.debug('starting webserver')
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -265,6 +343,12 @@ def cli(args):
             logger.debug('firefox run %d' % i)
             if args.use_marionette:
                 runner = MarionetteRunner(cmdargs=[url])
+            elif args.use_android:
+                #runner = AndroidFennecRunner(cmdargs=[url])
+                runner = AndroidRunner(app_name='org.mozilla.fennec',
+                                       activity_name='.App',
+                                       intent='android.intent.action.VIEW',
+                                       url=url)
             else:
                 runner = mozrunner.FirefoxRunner(binary=firefox_binary,
                                                  cmdargs=[url])
@@ -277,7 +361,7 @@ def cli(args):
                     dzres.add_test_results(suite, result[name], [result[value]])
                 logger.debug('firefox results: %s' % json.dumps(results))
 
-        if not error and args.post_results:
+        if args.post_results:
             postresults(logger, 'firefox', 'nightly', version, benchmark, dzres)
 
         # Run chrome (if desired)
@@ -288,7 +372,15 @@ def cli(args):
         dzres.add_testsuite(suite)
         for i in xrange(0, num_runs):
             logger.debug('chrome run %d' % i)
-            runner = ChromeRunner(binary=args.chrome_path, cmdargs=[url])
+
+            if args.use_android:
+                runner = AndroidRunner(app_name='com.android.chrome',
+                                       activity_name='.Main',
+                                       intent='android.intent.action.VIEW',
+                                       url=url)
+            else:
+                runner = ChromeRunner(binary=args.chrome_path, cmdargs=[url])
+
             version, results = runtest(logger, runner, timeout)
             if results is None:
                 logger.error('no results found')
@@ -298,11 +390,11 @@ def cli(args):
                     dzres.add_test_results(suite, result[name], [result[value]])
                 logger.debug('chrome results: %s' % json.dumps(results))
 
-        if not error and args.post_results:
+        if args.post_results:
             postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
 
-    if firefox_binary:
-        cleanup_installation(logger, firefox_binary)
+    # Cleanup previously installed Firefox
+    cleanup_installation(logger, firefox_binary, args.use_android)
 
     return 0 if not error else 1
 
