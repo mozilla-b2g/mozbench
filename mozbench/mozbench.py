@@ -331,7 +331,7 @@ def cli(args):
                     dzres.add_test_results(suite, result[name], [result[value]])
                 logger.debug('firefox results: %s' % json.dumps(results))
 
-        if args.post_results:
+        if not error and args.post_results:
             postresults(logger, 'firefox', 'nightly', version, benchmark, dzres)
 
         # Run chrome (if desired)
@@ -352,11 +352,11 @@ def cli(args):
                     dzres.add_test_results(suite, result[name], [result[value]])
                 logger.debug('chrome results: %s' % json.dumps(results))
 
-        if args.post_results:
+        if not error and args.post_results:
             postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
 
-    # Cleanup previously installed Firefox
-    cleanup_installation(logger, firefox_binary)
+    if firefox_binary:
+        cleanup_installation(logger, firefox_binary)
 
     return 0 if not error else 1
 
