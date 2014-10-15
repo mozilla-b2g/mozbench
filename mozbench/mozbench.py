@@ -72,11 +72,12 @@ class MarionetteRunner(object):
 
 class AndroidRunner(object):
 
-    def __init__(self, app_name, activity_name, intent, url):
+    def __init__(self, app_name, activity_name, intent, url, device_id):
         self.app_name = app_name
         self.activity_name = activity_name
         self.intent = intent
         self.url = url
+        self.device_id = device_id if device_id != True else None
         self.device = None
 
     def start(self):
@@ -88,8 +89,8 @@ class AndroidRunner(object):
             print('No devices found')
             return 1
 
-        # Connect to the device
-        self.device = mozdevice.ADBAndroid(None)
+        # Connect to the device        
+        self.device = mozdevice.ADBAndroid(self.device_id)
 
         # Laungh Fennec
         self.device.launch_application(app_name=self.app_name,
@@ -163,7 +164,7 @@ def cleanup_installation(logger, firefox_binary, use_android=None):
         logger.error(e)
 
 
-def install_fennec(url):
+def install_fennec(url, device_id):
 
     # Check if we have any device connected
     adb_host = mozdevice.ADBHost()
@@ -173,7 +174,10 @@ def install_fennec(url):
         return 1
 
     # Connect to the device
-    device = mozdevice.ADBAndroid(None)
+    if device_id == True:
+        device = mozdevice.ADBAndroid(None)
+    else:
+        device = mozdevice.ADBAndroid(device_id)
 
     # Fetch Fennec
     name, headers = urllib.urlretrieve(url, 'fennec.apk')
@@ -279,7 +283,7 @@ def cli(args):
                         default=None)
     parser.add_argument('--use-marionette', action='store_true',
                         help='Use marionette to run tests on firefox os')
-    parser.add_argument('--use-android', action='store_true',
+    parser.add_argument('--use-android', nargs='?', const=True,
                         help='Use AndroidRunner to run tests on Android')
     parser.add_argument('--chrome-path', help='path to chrome executable',
                         default=None)
@@ -298,9 +302,9 @@ def cli(args):
 
     # install firefox (if necessary)
     firefox_binary = None
-    if args.firefox_url:
-        if args.use_android:
-            install_fennec(args.firefox_url)
+    if args.firefox_url:        
+        if args.use_android:            
+            install_fennec(args.firefox_url, args.use_android)
         else:
             firefox_binary = install_firefox(logger, args.firefox_url)
             if firefox_binary is None:
@@ -348,7 +352,8 @@ def cli(args):
                 runner = AndroidRunner(app_name='org.mozilla.fennec',
                                        activity_name='.App',
                                        intent='android.intent.action.VIEW',
-                                       url=url)
+                                       url=url,
+                                       device_id=args.use_android)
             else:
                 runner = mozrunner.FirefoxRunner(binary=firefox_binary,
                                                  cmdargs=[url])
@@ -377,7 +382,8 @@ def cli(args):
                 runner = AndroidRunner(app_name='com.android.chrome',
                                        activity_name='.Main',
                                        intent='android.intent.action.VIEW',
-                                       url=url)
+                                       url=url,
+                                       device_id=args.use_android)
             else:
                 runner = ChromeRunner(binary=args.chrome_path, cmdargs=[url])
 
