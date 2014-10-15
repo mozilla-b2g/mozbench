@@ -178,12 +178,14 @@ def install_fennec(url, device_id):
         device = mozdevice.ADBAndroid(None)
     else:
         device = mozdevice.ADBAndroid(device_id)
+    
+    # We only need to install Fennec if it isn't already installed
+    if not device.is_app_installed('org.mozilla.fennec'):          
+      # Fetch Fennec
+      name, headers = urllib.urlretrieve(url, 'fennec.apk')
 
-    # Fetch Fennec
-    name, headers = urllib.urlretrieve(url, 'fennec.apk')
-
-    # Install Fennec
-    device.install_app(name)
+      # Install Fennec
+      device.install_app(name)
 
 
 def install_firefox(logger, url, use_android):
