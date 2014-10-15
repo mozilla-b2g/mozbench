@@ -186,8 +186,13 @@ def install_fennec(url, device_id):
     device.install_app(name)
 
 
-def install_firefox(logger, url):
+def install_firefox(logger, url, use_android):
     logger.debug('installing firefox')
+    
+    if use_android:
+        install_fennec(url, use_android)
+        return True
+    
     name, headers = '', ''
 
     if mozinfo.os == 'mac':
@@ -303,12 +308,10 @@ def cli(args):
     # install firefox (if necessary)
     firefox_binary = None
     if args.firefox_url:        
-        if args.use_android:            
-            install_fennec(args.firefox_url, args.use_android)
-        else:
-            firefox_binary = install_firefox(logger, args.firefox_url)
-            if firefox_binary is None:
-                return 1
+        firefox_binary = install_firefox(logger, args.firefox_url,
+                                         args.use_android)
+        if firefox_binary is None:
+            return 1
 
     logger.debug('starting webserver')
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
