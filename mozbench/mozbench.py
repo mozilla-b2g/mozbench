@@ -9,7 +9,6 @@ import json
 import logging
 import marionette
 import mozinfo
-import mozdevice
 from mozlog.structured import (
     commandline,
     formatters,
@@ -69,31 +68,6 @@ class MarionetteRunner(object):
     def wait(self):
         pass
 
-
-class AndroidRunner(object):
-
-    def __init__(self, cmdargs=None):
-        self.cmdargs = cmdargs or []
-
-    def start(self):
-
-        # Check if we have any device connected
-        adb_host = mozdevice.ADBHost()
-        devices = adb_host.devices()
-        if not devices:
-            print('No devices found')
-            return 1
-
-        # Connect to the device
-        device = mozdevice.ADBAndroid(None)
-
-    def stop(self):
-        pass
-
-    def wait(self):
-        pass
-
-
 @wptserve.handlers.handler
 def results_handler(request, response):
     global headers
@@ -135,26 +109,6 @@ def cleanup_installation(logger, firefox_binary):
     except OSError as e:
         # We tried to remove a folder/file that did not exist
         logger.error(e)
-
-
-def install_fennec(url):
-
-    # Check if we have any device connected
-    adb_host = mozdevice.ADBHost()
-    devices = adb_host.devices()
-    if not devices:
-        print('No devices found')
-        return 1
-
-    # Connect to the device
-    device = mozdevice.ADBAndroid(None)
-
-    # Fetch Fennec
-    name, headers = urllib.urlretrieve(url, 'fennec.apk')
-
-    # Install Fennec
-    device.install_app(name)
-
 
 def install_firefox(logger, url):
     logger.debug('installing firefox')
@@ -253,8 +207,6 @@ def cli(args):
                         default=None)
     parser.add_argument('--use-marionette', action='store_true',
                         help='Use marionette to run tests on firefox os')
-    parser.add_argument('--use-android', action='store_true',
-                        help='Use AndroidRunner to run tests on Android')
     parser.add_argument('--chrome-path', help='path to chrome executable',
                         default=None)
     parser.add_argument('--post-results', action='store_true',
@@ -265,20 +217,16 @@ def cli(args):
     logging.basicConfig()
     logger = commandline.setup_logging('mozbench', vars(args), {})
 
-    if not args.use_marionette and not args.use_android and not args.firefox_url:
-        logger.error('you must specify one of --use-marionette or ' +
-                     '-- user-android  or --firefox-url')
+    if not args.use_marionette and not args.firefox_url:
+        logger.error('you must specify one of --use-marionette or --firefox-url')
         return 1
 
     # install firefox (if necessary)
     firefox_binary = None
     if args.firefox_url:
-        if args.use_android:
-            install_fennec(args.firefox_url)
-        else:
-            firefox_binary = install_firefox(logger, args.firefox_url)
-            if firefox_binary is None:
-                return 1
+        firefox_binary = install_firefox(logger, args.firefox_url)
+        if firefox_binary is None:
+            return 1
 
     logger.debug('starting webserver')
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -317,8 +265,6 @@ def cli(args):
             logger.debug('firefox run %d' % i)
             if args.use_marionette:
                 runner = MarionetteRunner(cmdargs=[url])
-            elif args.use_android:
-                runner = AndroidRunner(cmdargs=[args.firefox_url])
             else:
                 runner = mozrunner.FirefoxRunner(binary=firefox_binary,
                                                  cmdargs=[url])
