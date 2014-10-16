@@ -123,7 +123,7 @@ def run_command(cmd):
     return p.output
 
 
-def cleanup_android():
+def cleanup_android(logger):
     # Connect to the device
     device = mozdevice.ADBAndroid(None)
 
@@ -131,13 +131,18 @@ def cleanup_android():
     device.uninstall_app(app_name='org.mozilla.fennec')
 
     # Remove APK
-    os.remove('fennec.apk')
+    try:
+        os.remove('fennec.apk')
+    except OSError as e:
+        # We tried to remove an APK that does not exist
+        logger.error(e)
+
 
 def cleanup_installation(logger, firefox_binary, use_android=None):
 
     # Check if we're dealing with an Android device
     if use_android:
-        cleanup_android()
+        cleanup_android(logger)
         return
 
     folder_to_remove = ''
