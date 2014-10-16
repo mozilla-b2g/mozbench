@@ -127,7 +127,7 @@ def cleanup_android():
     # Connect to the device
     device = mozdevice.ADBAndroid(None)
 
-    # Laungh Fennec
+    # Uninstall Fennec
     device.uninstall_app(app_name='org.mozilla.fennec')
 
     # Remove APK
@@ -356,7 +356,6 @@ def cli(args):
             if args.use_marionette:
                 runner = MarionetteRunner(cmdargs=[url])
             elif args.use_android:
-                #runner = AndroidFennecRunner(cmdargs=[url])
                 runner = AndroidRunner(app_name='org.mozilla.fennec',
                                        activity_name='.App',
                                        intent='android.intent.action.VIEW',
