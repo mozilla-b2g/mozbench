@@ -307,9 +307,9 @@ def cli(args):
     logging.basicConfig()
     logger = commandline.setup_logging('mozbench', vars(args), {})
 
-    if not args.use_marionette and not args.use_android and not args.firefox_url:
+    if not args.use_marionette and not args.firefox_url:
         logger.error('you must specify one of --use-marionette or ' +
-                     '-- user-android  or --firefox-url')
+                     '--firefox-url')
         return 1
 
     # install firefox (if necessary)
