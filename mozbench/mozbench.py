@@ -172,7 +172,7 @@ def install_fennec(logger, url, device_id):
     devices = adb_host.devices()
     if not devices:
         logger.error('No devices found')
-        return 1
+        return None
 
     # Connect to the device
     if device_id == True:
@@ -188,13 +188,15 @@ def install_fennec(logger, url, device_id):
       # Install Fennec
       device.install_app(name)
 
+      return True
+
 
 def install_firefox(logger, url, use_android):
     logger.debug('installing firefox')
 
     if use_android:
-        install_fennec(logger, url, use_android)
-        return True
+        res = install_fennec(logger, url, use_android)
+        return res
 
     name, headers = '', ''
 
