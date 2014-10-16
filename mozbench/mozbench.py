@@ -89,7 +89,7 @@ class AndroidRunner(object):
             print('No devices found')
             return 1
 
-        # Connect to the device        
+        # Connect to the device
         self.device = mozdevice.ADBAndroid(self.device_id)
 
         # Laungh Fennec
@@ -164,13 +164,14 @@ def cleanup_installation(logger, firefox_binary, use_android=None):
         logger.error(e)
 
 
-def install_fennec(url, device_id):
+def install_fennec(logger, url, device_id):
+    logger.debug('installing fennec')
 
     # Check if we have any device connected
     adb_host = mozdevice.ADBHost()
     devices = adb_host.devices()
     if not devices:
-        print('No devices found')
+        logger.error('No devices found')
         return 1
 
     # Connect to the device
@@ -178,9 +179,9 @@ def install_fennec(url, device_id):
         device = mozdevice.ADBAndroid(None)
     else:
         device = mozdevice.ADBAndroid(device_id)
-    
+
     # We only need to install Fennec if it isn't already installed
-    if not device.is_app_installed('org.mozilla.fennec'):          
+    if not device.is_app_installed('org.mozilla.fennec'):
       # Fetch Fennec
       name, headers = urllib.urlretrieve(url, 'fennec.apk')
 
@@ -190,11 +191,11 @@ def install_fennec(url, device_id):
 
 def install_firefox(logger, url, use_android):
     logger.debug('installing firefox')
-    
+
     if use_android:
-        install_fennec(url, use_android)
+        install_fennec(logger, url, use_android)
         return True
-    
+
     name, headers = '', ''
 
     if mozinfo.os == 'mac':
@@ -309,7 +310,7 @@ def cli(args):
 
     # install firefox (if necessary)
     firefox_binary = None
-    if args.firefox_url:        
+    if args.firefox_url:
         firefox_binary = install_firefox(logger, args.firefox_url,
                                          args.use_android)
         if firefox_binary is None:
