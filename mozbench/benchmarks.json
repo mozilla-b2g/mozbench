@@ -14,13 +14,5 @@
    "enabled": true,
    "name": "benchmark",
    "value": "result"
-  },
-  {"suite": "webgl-khronos",
-   "url": "WebGLPerf/index.html",
-   "number_of_runs": 5,
-   "timeout": 300,
-   "enabled": false,
-   "name": "name",
-   "value": "result"
   }
 ]
