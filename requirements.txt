@@ -1,4 +1,5 @@
 datazilla
+fxos_appgen
 marionette_client == 0.7.10
 mozinfo
 mozinstall

@@ -5,6 +5,7 @@
 import argparse
 import copy
 from dzclient import DatazillaRequest, DatazillaResult
+import fxos_appgen
 import json
 import logging
 import marionette
@@ -32,43 +33,6 @@ from shutil import rmtree
 
 headers = None
 results = None
-
-
-class ChromeRunner(mozrunner.base.BaseRunner):
-
-    def __init__(self, binary, cmdargs=None, **runner_args):
-        mozrunner.base.BaseRunner.__init__(self, **runner_args)
-
-        self.binary = binary
-        self.cmdargs = cmdargs or []
-
-    @property
-    def command(self):
-        return [self.binary] + self.cmdargs
-
-class MarionetteRunner(object):
-
-    def __init__(self, cmdargs=None):
-        self.cmdargs = cmdargs or []
-
-    def start(self):
-        cmd = ['adb', 'forward', 'tcp:2828', 'tcp:2828']
-        p = ProcessHandler(cmd)
-        p.run()
-        p.wait()
-
-        m = marionette.Marionette('localhost', 2828)
-        m.start_session()
-        print('navigating to: %s' % self.cmdargs[0])
-        m.navigate(self.cmdargs[0])
-        m.delete_session()
-
-    def stop(self):
-        pass
-
-    def wait(self):
-        pass
-
 
 class AndroidRunner(object):
 
@@ -103,6 +67,44 @@ class AndroidRunner(object):
 
     def wait(self):
         pass
+
+
+class B2GRunner(object):
+
+    def __init__(self, cmdargs=None):
+        self.cmdargs = cmdargs or []
+
+    def start(self):
+        fxos_appgen.launch_app('browser')
+
+        script = """
+          window.wrappedJSObject.Browser.navigate('%s');
+        """
+        m = marionette.Marionette('localhost', 2828)
+        m.start_session()
+        browser = m.find_element('css selector', 'iframe[src="app://browser.gaiamobile.org/index.html"]')
+        m.switch_to_frame(browser)
+        m.execute_script(script % self.cmdargs[0])
+        m.delete_session()
+
+    def stop(self):
+        pass
+
+    def wait(self):
+        pass
+
+
+class ChromeRunner(mozrunner.base.BaseRunner):
+
+    def __init__(self, binary, cmdargs=None, **runner_args):
+        mozrunner.base.BaseRunner.__init__(self, **runner_args)
+
+        self.binary = binary
+        self.cmdargs = cmdargs or []
+
+    @property
+    def command(self):
+        return [self.binary] + self.cmdargs
 
 
 @wptserve.handlers.handler
@@ -298,7 +300,7 @@ def cli(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('--firefox-url', help='url to firefox installer',
                         default=None)
-    parser.add_argument('--use-marionette', action='store_true',
+    parser.add_argument('--use-b2g', action='store_true',
                         help='Use marionette to run tests on firefox os')
     parser.add_argument('--use-android', nargs='?', const=True, choices=['DEVICE ID'],
                         help='Use AndroidRunner to run tests on Android')
@@ -312,7 +314,7 @@ def cli(args):
     logging.basicConfig()
     logger = commandline.setup_logging('mozbench', vars(args), {})
 
-    if not args.use_marionette and not args.firefox_url:
+    if not args.use_b2g and not args.firefox_url:
         logger.error('you must specify one of --use-marionette or ' +
                      '--firefox-url')
         return 1
@@ -358,10 +360,9 @@ def cli(args):
         dzres = DatazillaResult()
         dzres.add_testsuite(suite)
         for i in xrange(0, num_runs):
-
             logger.debug('firefox run %d' % i)
-            if args.use_marionette:
-                runner = MarionetteRunner(cmdargs=[url])
+            if args.use_b2g:
+                runner = B2GRunner(cmdargs=[url])
             elif args.use_android:
                 runner = AndroidRunner(app_name='org.mozilla.fennec',
                                        activity_name='.App',
@@ -414,7 +415,8 @@ def cli(args):
             postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
 
     # Cleanup previously installed Firefox
-    cleanup_installation(logger, firefox_binary, args.use_android)
+    if not args.use_b2g:
+        cleanup_installation(logger, firefox_binary, args.use_android)
 
     return 0 if not error else 1
 

@@ -10,7 +10,7 @@
   {"suite": "massive",
    "url": "Massive/index.html?autoRun=true,postToURL=/results",
    "number_of_runs": 5,
-   "timeout": 1200,
+   "timeout": 2000,
    "enabled": true,
    "name": "benchmark",
    "value": "result"
