@@ -394,7 +394,7 @@ def cli(args):
             logger.debug('chrome run %d' % i)
 
             if args.use_android:
-                runner = AndroidRunner(app_name='com.android.chrome',
+                runner = AndroidRunner(app_name=args.chrome_path,
                                        activity_name='.Main',
                                        intent='android.intent.action.VIEW',
                                        url=url,

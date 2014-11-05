@@ -35,6 +35,28 @@ On Linux, chrome should be in your path already:
 
     google-chrome
 
+The --chrome-path argument is optional; if omitted the benchmarks will not
+be run on chrome. It is assumed that chrome is already installed and is being
+updated through the normal chrome update channels.
+
+To run the benchmarks on android, without chrome:
+
+    python mozbench.py --firefox-url <url> --use-android --log-mach=-
+
+The firefox url should point to a fennec apk in this case. To run the benchmarks
+on android with chrome installed, the chrome path is the name of the chrome
+package to use, as follows:
+
+    python mozbench.py --firefox-url <url> --chrome-path com.android.chrome --use-android --log-mach=-
+
+
+To run the benchmarks on Firefox OS it is first necessary to flash the phone
+with the desired build to test. It can then be run using the following command
+from the mozbench directory:
+
+    python mozbench.py --use-b2g --log-mach=-
+
+
 #Adding a new benchmark
 
 Benchmarks are served to the browser by a webserver started by the test
