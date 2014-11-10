@@ -57,8 +57,21 @@
         preRun: [],
         postRun: [],
         doNotCaptureKeyboard: 1,
+        tests: {
+          'Mandelbrot GPU': 0,
+        },
         print: (function() {
           return function(text) {
+            if (text.length < 50) {
+              var test = text.split(':');            
+              if (test.length > 0) {                                              
+                if (test[0] in this.tests) {
+                  console.log('Found: ' + test[0]);              
+                } 
+              }
+            }
+            
+            
             console.log (text);
           };
         })(),
