@@ -49,6 +49,7 @@
       <img class="loadingImage" id="loadingimage" src="loading2.gif">
     </div>
     <p class="footer">&laquo; created with <a href="http://unity3d.com/" title="Go to unity3d.com">Unity</a> &raquo;</p>
+    <script type="text/javascript" src="Data/mozbench.js"></script>>
     <script type='text/javascript'>
       // connect to canvas
       var Module = {
@@ -56,22 +57,11 @@
         memoryInitializerPrefixURL: "Data/",        
         preRun: [],
         postRun: [],
-        doNotCaptureKeyboard: 1,
-        tests: {
-          'Mandelbrot GPU': 0,
-        },
+        doNotCaptureKeyboard: 1,        
+        results: [],
         print: (function() {
           return function(text) {
-            if (text.length < 50) {
-              var test = text.split(':');            
-              if (test.length > 0) {                                              
-                if (test[0] in this.tests) {
-                  console.log('Found: ' + test[0]);              
-                } 
-              }
-            }
-            
-            
+            processText(text);            
             console.log (text);
           };
         })(),
