@@ -1,31 +1,51 @@
-var tests = [{
-  benchmark: 'Mandelbrot GPU',
-  result: -1
-}];
+
+var benchmarks = ['Mandelbrot GPU', 'Mandelbrot Script', 'Instantiate & Destroy',
+  'CryptoHash Script', 'Animation & Skinning', 'Animation & Skinning',
+  'Particles', 'Particles', 'Physics Cubes', 'Physics Spheres',
+  '2D Physics Spheres', '2D Physics Spheres', 'AI Agents'];
+
+var results = [];
 
 function processText(text) {
+  /** 
+    This function is being used with all kinds of text being sent to 'print'.
+    Limit the size of texts we analyse or else we will break the benchmark.
+  */
   if (text.length < 50) {
+
     var test = text.split(':');            
     if (test.length > 0) {
       if (test[0] === 'Overall') {
-        tests.push({
+        // Add Overall result to results
+        results.push({
           benchmark: 'Overall',
           result: test[1]
         });
-
-        var xmlHttp = new XMLHttpRequest();
-        xmlHttp.open("POST", "/results", true);
-        xmlHttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-        xmlHttp.send("results=" + JSON.stringify(tests));
+        
+        // Post results back to Mozbench
+        postResults();
         return;
       }
 
-      for (var i = 0 ; i < tests.length; i++) {
-        if (test[0] === tests[i].benchmark) {
-          tests[i].result = test[1];
+      // We haven't reach the end. Let's check if we have a possibel result.
+      for (var i = 0 ; i < benchmarks.length; i++) {
+        if (test[0] === benchmarks[i]) {
+          // Add benchmark result to results
+          results.push({
+            benchmark: test[0],
+            result: test[1]
+          });
           break;        
         }
       }
     }
   }
+}
+
+function postResults() {
+  var xmlHttp = new XMLHttpRequest();
+  xmlHttp.open("POST", "/results", true);
+  xmlHttp.setRequestHeader("Content-type", 
+                            "application/x-www-form-urlencoded");
+  xmlHttp.send("results=" + JSON.stringify(results));        
 }
