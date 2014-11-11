@@ -1,15 +1,15 @@
 
-var benchmarks = ['Mandelbrot GPU', 'Mandelbrot Script', 'Instantiate & Destroy',
-  'CryptoHash Script', 'Animation & Skinning', 'Animation & Skinning',
-  'Particles', 'Particles', 'Physics Cubes', 'Physics Spheres',
-  '2D Physics Spheres', '2D Physics Spheres', 'AI Agents'];
+var benchmarks = ['Mandelbrot GPU', 'Mandelbrot Script',
+  'Instantiate & Destroy', 'CryptoHash Script', 'Animation & Skinning',
+  'Asteroid Field', 'Particles', 'Physics Meshes', 'Physics Cubes',
+  'Physics Spheres', '2D Physics Spheres', '2D Physics Boxes', 'AI Agents'];
 
 var results = [];
 
 function processText(text) {
   /** 
     This function is being used with all kinds of text being sent to 'print'.
-    Limit the size of texts we analyse or else we will break the benchmark.
+    Limit the size of texts to analyse or else we will break the benchmark.
   */
   if (text.length < 50) {
 
@@ -21,7 +21,7 @@ function processText(text) {
           benchmark: 'Overall',
           result: test[1]
         });
-        
+
         // Post results back to Mozbench
         postResults();
         return;
@@ -47,5 +47,6 @@ function postResults() {
   xmlHttp.open("POST", "/results", true);
   xmlHttp.setRequestHeader("Content-type", 
                             "application/x-www-form-urlencoded");
-  xmlHttp.send("results=" + JSON.stringify(results));        
+  // We need to use encodeURIComponent because of the '&' in benchmark names.
+  xmlHttp.send("results=" + encodeURIComponent(JSON.stringify(results)));        
 }
