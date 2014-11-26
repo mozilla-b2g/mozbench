@@ -7,6 +7,9 @@ def get_firefox_version(url):
     m = re.search('(firefox-[\d\.a-z]+.\w\w-\w\w)\.', files)
     if m:
         return m.groups()[0]
+    m = re.search('(fennec-[\d\.a-z]+)\.', files)
+    if m:
+        return m.groups()[0]
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
