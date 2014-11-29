@@ -26,6 +26,3 @@ div.title { height: 38px; line-height: 38px; padding: 0 10px; margin: 0 1px 0 0;
 body.template { }
 .template .template-wrap { }
 .template .template-wrap canvas { }
-
-.invScreenshotButton { z-index: 10; position: absolute; top: 50%; left: 50%; -webkit-transform: translate(340px, 250px); transform: translate(340px, 250px); height: 90px; width: 300px;  }
-.loadingImage { visibility: hidden; z-index: 10; position: absolute; top: 50%; left: 50%; -webkit-transform: translate(-64px, -64px); transform: translate(-64px, -64px); }

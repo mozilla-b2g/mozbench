@@ -35,6 +35,8 @@ function onLoginFailure() {
 // Implement your failed-to-login code here
 };
 
+postScreenShotData = {};
+
 doPostScreenshot = function(score, browserString, imageData) {
 
 	var postOpenGraphStory = function(imageUrl) {
@@ -57,7 +59,6 @@ doPostScreenshot = function(score, browserString, imageData) {
 			},
 			function(response) {
 
-		  		document.getElementById("loadingimage").style.visibility = "hidden";
 				if(response && response.id) {
 					// If we succeeded, pop up standard Facebook share dialog
 					FB.ui({
@@ -77,7 +78,6 @@ doPostScreenshot = function(score, browserString, imageData) {
 	};
 
 	var _sendScreenshot = function() {
-		console.log ("_sendScreenshot");
 		var blob = new Blob([imageData], {type: 'image/png'});
 
 		var formData = new FormData();
@@ -87,16 +87,12 @@ doPostScreenshot = function(score, browserString, imageData) {
 		var xhr = new XMLHttpRequest();
 		xhr.open( 'POST', 'https://graph.facebook.com/me/staging_resources?access_token=' + FB.getAccessToken(), true );
 		xhr.onload = function() {
-			console.log ("onload");
-			console.log (xhr.responseText);
+	  		document.getElementById("loadingimage").style.visibility = "hidden";
 			var responseObj = JSON.parse (xhr.responseText);
-			console.log(responseObj);
 			if (responseObj && responseObj.uri)
 			{
 				postOpenGraphStory(responseObj.uri);
 			}
-			else
-		  		document.getElementById("loadingimage").style.visibility = "hidden";
 		};
 
 		xhr.onerror = function() {
@@ -114,17 +110,22 @@ doPostScreenshot = function(score, browserString, imageData) {
 	// -- If login succeeds, send screenshot via curried function
 	// -- Else, call error callback
 	document.getElementById("loadingimage").style.visibility = "visible";
-	FB.login(function(loginResponse) {
-		console.log ("FB.login");
-		console.log (loginResponse);
-		if(loginResponse.status === 'connected') {
+	FB.getLoginStatus(function(response) {
+	  if (response.status === 'connected') {
+		_sendScreenshot();
+	  }
+	  else {
+		FB.login(function(loginResponse) {
+		  if(loginResponse === 'connected') {
 			_sendScreenshot();
-		}
-		else {
-			document.getElementById("loadingimage").style.visibility = "hidden";
+		  }
+		  else {
+	  		document.getElementById("loadingimage").style.visibility = "hidden";
 			onLoginFailure();
-		}
-	}, {scope: 'publish_actions'});
+		  }
+		}, {scope: 'publish_actions'});
+	  }
+	});
 }
 
 var screenShotData;

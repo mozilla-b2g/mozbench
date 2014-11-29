@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Unity WebGL Benchmarks</title>
+    <title>Unity WebGL Player | unity_bench2</title>
     <style type="text/css">
     <!--
     body {
@@ -37,31 +37,27 @@
     <link rel="shortcut icon" href="Data/favicon.ico" />
     <script src="Data/UnityProgress.js"></script>
     <script src="Data/UnityConfig.js"></script>
-    <script src="StreamingAssets/fb.js"></script>
   </head>
   <body class="template">
-    <p class="header"><span>Unity WebGL Benchmarks</p>
+    <p class="header"><span>Unity WebGL Player | </span>unity_bench2</p>
     <div class="template-wrap clear">
     <canvas class="emscripten" id="canvas" oncontextmenu="event.preventDefault()" height="720px" width="1280px"></canvas>
-      <div class="invScreenshotButton"  onclick="window.postScreenshot()"></div>
       <div class="logo"></div>
-      <div class="title">Unity WebGL Benchmarks <a href="http://blogs.unity3d.com/?p=19830">(More info...)</a></div>
-      <img class="loadingImage" id="loadingimage" src="loading2.gif">
+      <div class="fullscreen"><img src="Data/fullscreen.png" width="38" height="38" alt="Fullscreen" title="Fullscreen" onclick="SetFullscreen(1);" /></div>
+      <div class="title">unity_bench2</div>
     </div>
     <p class="footer">&laquo; created with <a href="http://unity3d.com/" title="Go to unity3d.com">Unity</a> &raquo;</p>
-    <script type="text/javascript" src="Data/mozbench.js"></script>>
+    <script type="text/javascript" src="Data/mozbench.js"></script>
     <script type='text/javascript'>
       // connect to canvas
       var Module = {
         filePackagePrefixURL: "Data/",
-        memoryInitializerPrefixURL: "Data/",        
+        memoryInitializerPrefixURL: "Data/",
         preRun: [],
         postRun: [],
-        doNotCaptureKeyboard: 1,        
-        results: [],
         print: (function() {
           return function(text) {
-            processText(text);            
+            processText(text);
             console.log (text);
           };
         })(),
@@ -97,34 +93,21 @@
           Module.setStatus(left ? 'Preparing... (' + (this.totalDependencies-left) + '/' + this.totalDependencies + ')' : 'All downloads complete.');
         }
       };
-      Module.setStatus('Downloading...');
+      Module.setStatus('Downloading (0.0/1)');
     </script>
     <script src="Data/fileloader.js"></script>
     <script>if (!(!Math.fround)) {
   var script = document.createElement('script');
-  script.src = "Data/WebGLBenchmark.js";
+  script.src = "Data/WebGLBenchmarks.js";
   document.body.appendChild(script);
 } else {
   var codeXHR = new XMLHttpRequest();
-  codeXHR.open('GET', 'Data/WebGLBenchmark.js', true);
+  codeXHR.open('GET', 'Data/WebGLBenchmarks.js', true);
   codeXHR.onload = function() {
     var code = codeXHR.responseText;
     if (!Math.fround) { 
-try {
-  console.log('optimizing out Math.fround calls');
-  var m = /var ([^=]+)=global\.Math\.fround;/.exec(code);
-  var minified = m[1];
-  if (!minified) throw 'fail';
-  var startAsm = code.indexOf('// EMSCRIPTEN_START_FUNCS');
-  var endAsm = code.indexOf('// EMSCRIPTEN_END_FUNCS');
-  var asm = code.substring(startAsm, endAsm);
-  do {
-    var moar = false; // we need to re-do, as x(x( will not be fixed
-    asm = asm.replace(new RegExp('[^a-zA-Z0-9\\$\\_]' + minified + '\\(', 'g'), function(s) { moar = true; return s[0] + '(' });
-  } while (moar);
-  code = code.substring(0, startAsm) + asm + code.substring(endAsm);
-  code = code.replace("'use asm'", "'almost asm'");
-} catch(e) { console.log('failed to optimize out Math.fround calls ' + e) }
+console.log('optimizing out Math.fround calls');
+code = code.replace(/Math_fround\(/g, '(').replace("'use asm'", "'almost asm'")
  }
 
     var blob = new Blob([code], { type: 'text/javascript' });
