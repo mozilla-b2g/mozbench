@@ -35,6 +35,14 @@ On Linux, chrome should be in your path already:
 
     google-chrome
 
+**Note**: The Unity-WebGLBenchamark has some big files and because of that they
+had to be compressed. In order to run that benchmark go (from the project root
+folder):
+
+    cd mozbench/static/Unity-WebGLBenchmark/Data/
+    tar xvzf WebGLBenchmark.data.tar.gz WebGLBenchmark.data
+    tar xvzf WebGLBenchmarks.js.tar.gz WebGLBenchmarks.js
+
 #Adding a new benchmark
 
 Benchmarks are served to the browser by a webserver started by the test
