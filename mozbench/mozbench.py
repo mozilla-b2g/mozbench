@@ -357,7 +357,7 @@ def cli(args):
         elif args.use_android:
             platform = 'android'
 
-        # Check if benchmark should run in this platform
+        # Check if benchmark is enabled for platform
         if not ('all' in benchmark['enabled'] or
                 platform in benchmark['enabled']):
             logger.debug('Skipping disabled benchmark: %s for platform %s' %
