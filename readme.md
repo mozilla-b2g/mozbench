@@ -40,7 +40,7 @@ had to be compressed. In order to run that benchmark go (from the project root
 folder):
 
     cd mozbench/static/Unity-WebGLBenchmark/Data/
-    tar xvzf WebGLBenchmark.data.tar.gz WebGLBenchmark.data
+    tar xvzf WebGLBenchmarks.data.tar.gz WebGLBenchmarks.data
     tar xvzf WebGLBenchmarks.js.tar.gz WebGLBenchmarks.js
 
 #Adding a new benchmark
