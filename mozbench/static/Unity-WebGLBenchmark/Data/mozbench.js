@@ -8,29 +8,28 @@ var results = [];
 
 function processText(text) {
   var test = text.split(':');            
-  if (test.length > 0) {
-    if (test[0] === 'Overall') {
-      // Add Overall result to results
+  
+  if (test[0] === 'Overall') {
+    // Add Overall result to results
+    results.push({
+      benchmark: 'Overall',
+      result: test[1]
+    });
+
+    // Post results back to Mozbench
+    postResults();
+    return;
+  }
+
+  // We haven't reach the end. Let's check if we have a possibel result.
+  for (var i = 0 ; i < benchmarks.length; i++) {
+    if (test[0] === benchmarks[i]) {
+      // Add benchmark result to results
       results.push({
-        benchmark: 'Overall',
+        benchmark: test[0],
         result: test[1]
       });
-
-      // Post results back to Mozbench
-      postResults();
-      return;
-    }
-
-    // We haven't reach the end. Let's check if we have a possibel result.
-    for (var i = 0 ; i < benchmarks.length; i++) {
-      if (test[0] === benchmarks[i]) {
-        // Add benchmark result to results
-        results.push({
-          benchmark: test[0],
-          result: test[1]
-        });
-        break;        
-      }
+      break;        
     }
   }
 }
