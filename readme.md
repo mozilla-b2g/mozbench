@@ -35,7 +35,7 @@ On Linux, chrome should be in your path already:
 
     google-chrome
 
-**Note**: The Unity-WebGLBenchamark has some big files and because of that they
+**Note**: The Unity-WebGLBenchmark has some big files and because of that they
 had to be compressed. In order to run that benchmark go (from the project root
 folder):
 

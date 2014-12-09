@@ -21,7 +21,7 @@ function processText(text) {
     return;
   }
 
-  // We haven't reach the end. Let's check if we have a possibel result.
+  // We haven't reach the end. Let's check if we have a possible result.
   for (var i = 0 ; i < benchmarks.length; i++) {
     if (test[0] === benchmarks[i]) {
       // Add benchmark result to results
