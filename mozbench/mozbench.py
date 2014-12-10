@@ -57,13 +57,14 @@ class AndroidRunner(object):
         self.device = mozdevice.ADBAndroid(self.device_id)
 
         # Laungh Fennec
+        self.device.stop_application(app_name=self.app_name)
         self.device.launch_application(app_name=self.app_name,
                                        activity_name=self.activity_name,
                                        intent=self.intent,
                                        url=self.url)
 
     def stop(self):
-        self.device.stop_application(app_name=self.app_name)
+        self.device.reboot();
 
     def wait(self):
         pass
@@ -381,7 +382,8 @@ def cli(args):
                     dzres.add_test_results(suite, result[name], [result[value]])
                 logger.debug('firefox results: %s' % json.dumps(results))
 
-        if args.post_results:
+        # if version exists, we must have at least some results
+        if version and args.post_results:
             postresults(logger, 'firefox', 'nightly', version, benchmark, dzres)
 
         # Run chrome (if desired)
@@ -411,7 +413,8 @@ def cli(args):
                     dzres.add_test_results(suite, result[name], [result[value]])
                 logger.debug('chrome results: %s' % json.dumps(results))
 
-        if args.post_results:
+        # if version exists, we must have at least some results
+        if version and args.post_results:
             postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
 
     # Cleanup previously installed Firefox
