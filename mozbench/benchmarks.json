@@ -1,25 +1,25 @@
 [
   {"suite": "webaudio-padenot",
    "url": "webaudio-benchmark/index.html",
-   "number_of_runs": 5,
+   "number_of_runs": 1,
    "timeout": 300,
-   "enabled": true,
+   "enabled": ["all"],
    "name": "name",
    "value": "duration"
   },
   {"suite": "massive",
    "url": "Massive/index.html?autoRun=true,postToURL=/results",
-   "number_of_runs": 5,
+   "number_of_runs": 1,
    "timeout": 2000,
-   "enabled": true,
+   "enabled": ["all"],
    "name": "benchmark",
    "value": "result"
   },
   {"suite": "unity-webgl",
    "url": "Unity-WebGLBenchmark/index.html",
-   "number_of_runs": 5,
+   "number_of_runs": 1,
    "timeout": 2000,
-   "enabled": false,
+   "enabled": [],
    "name": "benchmark",
    "value": "result"
   }

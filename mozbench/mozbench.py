@@ -351,8 +351,18 @@ def cli(args):
         name = benchmark['name']
         value = benchmark['value']
 
-        if not benchmark['enabled']:
-            logger.debug('skipping disabled benchmark: %s' % suite)
+        # Determine platform
+        platform = mozinfo.os
+        if args.use_b2g:
+            platform = 'b2g'
+        elif args.use_android:
+            platform = 'android'
+
+        # Check if benchmark is enabled for platform
+        if not ('all' in benchmark['enabled'] or
+                platform in benchmark['enabled']):
+            logger.debug('Skipping disabled benchmark: %s for platform %s' %
+                         (suite, platform))
             continue
 
         logger.debug('starting benchmark: %s' % suite)
