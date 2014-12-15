@@ -14,5 +14,13 @@
    "enabled": true,
    "name": "benchmark",
    "value": "result"
+  },
+  {"suite": "unity-webgl",
+   "url": "Unity-WebGLBenchmark/index.html",
+   "number_of_runs": 5,
+   "timeout": 2000,
+   "enabled": false,
+   "name": "benchmark",
+   "value": "result"
   }
 ]

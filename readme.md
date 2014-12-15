@@ -35,6 +35,8 @@ On Linux, chrome should be in your path already:
 
     google-chrome
 
+<<<<<<< HEAD
+<<<<<<< HEAD
 The --chrome-path argument is optional; if omitted the benchmarks will not
 be run on chrome. It is assumed that chrome is already installed and is being
 updated through the normal chrome update channels.
@@ -56,6 +58,13 @@ from the mozbench directory:
 
     python mozbench.py --use-b2g --log-mach=-
 
+**Note**: The Unity-WebGLBenchmark has some big files and because of that they
+had to be compressed. In order to run that benchmark go (from the project root
+folder):
+
+    cd mozbench/static/Unity-WebGLBenchmark/Data/
+    tar xvzf WebGLBenchmarks.data.tar.gz WebGLBenchmarks.data
+    tar xvzf WebGLBenchmarks.js.tar.gz WebGLBenchmarks.js
 
 #Adding a new benchmark
 
