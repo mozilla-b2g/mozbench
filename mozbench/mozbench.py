@@ -4,7 +4,6 @@
 
 import argparse
 import copy
-from dzclient import DatazillaRequest, DatazillaResult
 import fxos_appgen
 import json
 import logging
@@ -23,6 +22,7 @@ import mozrunner
 import os
 import platform
 import re
+import requests
 import sys
 import time
 import urllib
@@ -30,6 +30,8 @@ import wait
 import wptserve
 from subprocess import call
 from shutil import rmtree
+
+INFLUXDB_URL = 'http://54.215.155.53:8086/db/mozbench/series?'
 
 headers = None
 results = None
@@ -64,7 +66,7 @@ class AndroidRunner(object):
                                        url=self.url)
 
     def stop(self):
-        self.device.reboot();
+        self.device.stop_application(app_name=self.app_name)
 
     def wait(self):
         pass
@@ -254,43 +256,33 @@ def runtest(logger, runner, timeout):
         return None, None
 
 
-def postresults(logger, browser, branch, version, benchmark, results):
+def formatresults(suite, name, platform, browser, value, browser_version,
+                  os_version, processor):
+    table = 'benchmarks.' + '.'.join([suite, name, platform, browser])
+    return {'name': table,
+           'columns': ['value','browser-version', 'os-version', 'processor'],
+           'points': [[value, browser_version, os_version, processor]]}
 
-    secret_path = os.path.join(os.path.expanduser('~'), 'datazilla-secret.txt')
+
+def postresults(logger, results):
+
+    secret_path = os.path.join(os.path.expanduser('~'), 'influxdb-secret.txt')
     if not os.path.isfile(secret_path):
-        logger.error('could not post results to datazilla: secrets file: %s not found' % secret_path)
+        logger.error('could not post results: secrets file: %s not found' % secret_path)
         return
     with open(secret_path, 'r') as f:
-        key, secret = f.read().strip().split(',')
+        user, passwd = f.read().strip().split(',')
 
-    # TODO: get a real build id
-    build_id = '%s' % int(time.time())
-
-    req = DatazillaRequest(
-        protocol = 'https',
-        host = 'datazilla.mozilla.org',
-        project = 'mozbench',
-        oauth_key = key,
-        oauth_secret = secret,
-        machine_name = platform.node(),
-        os = mozinfo.os,
-        os_version = mozinfo.version,
-        platform = mozinfo.processor,
-        build_name = browser,
-        version = version[:2],  # Chrome's version is too long for datazilla
-        branch = branch,
-        revision = version,
-        id = build_id)
-
-    req.add_datazilla_result(results)
-    logger.debug('posting %s %s results to datazilla.mozilla.org' %
-                 (browser, version))
-    responses = req.submit()
-    for resp in responses:
-        # TODO: I've seen intermitten 403 Forbidden here, we should have
-        #       some retries in that case.
-        logger.debug('server response: %d %s %s' %
-                     (resp.status, resp.reason, resp.read()))
+    # we'll try four times before giving up
+    for i in xrange(0, 4):
+        try:
+            r = requests.post(INFLUXDB_URL + 'u=' + user + '&p=' + passwd,
+                              data=json.dumps(results))
+            logger.debug('results posted: %s: %s' % (r.status_code, r.text))
+            break
+        except requests.exceptions.ConnectionError:
+            pass
+        time.sleep(15)
 
 
 def cli(args):
@@ -340,8 +332,22 @@ def cli(args):
 
     url_prefix = 'http://' + httpd.host + ':' + str(httpd.port) + '/'
 
+    results_to_post = []
+
     with open(os.path.join(os.path.dirname(__file__), 'benchmarks.json')) as f:
         benchmarks = json.load(f)
+
+    # Determine platform
+    platform = mozinfo.os
+    os_version = mozinfo.version
+    processor = mozinfo.processor
+    if args.use_b2g:
+        platform = 'b2g'
+    elif args.use_android:
+        platform = 'android'
+        device = mozdevice.ADBAndroid(args.use_android if args.use_android != True else None)
+        os_version = device.get_prop('ro.build.version.release')
+        processor = device.get_prop('ro.product.cpu.abi')
 
     for benchmark in benchmarks:
         suite = benchmark['suite']
@@ -350,13 +356,6 @@ def cli(args):
         timeout = benchmark['timeout']
         name = benchmark['name']
         value = benchmark['value']
-
-        # Determine platform
-        platform = mozinfo.os
-        if args.use_b2g:
-            platform = 'b2g'
-        elif args.use_android:
-            platform = 'android'
 
         # Check if benchmark is enabled for platform
         if not ('all' in benchmark['enabled'] or
@@ -368,8 +367,6 @@ def cli(args):
         logger.debug('starting benchmark: %s' % suite)
 
         # Run firefox
-        dzres = DatazillaResult()
-        dzres.add_testsuite(suite)
         for i in xrange(0, num_runs):
             logger.debug('firefox run %d' % i)
             if args.use_b2g:
@@ -389,43 +386,39 @@ def cli(args):
                 error = True
             else:
                 for result in results:
-                    dzres.add_test_results(suite, result[name], [result[value]])
+                    results_to_post.append(formatresults(suite, result[name], platform,
+                                           'firefox.nightly', result[value], version,
+                                           os_version, processor))
                 logger.debug('firefox results: %s' % json.dumps(results))
 
-        # if version exists, we must have at least some results
-        if version and args.post_results:
-            postresults(logger, 'firefox', 'nightly', version, benchmark, dzres)
-
         # Run chrome (if desired)
-        if args.chrome_path is None:
-            continue
+        if args.chrome_path is not None:
+            for i in xrange(0, num_runs):
+                logger.debug('chrome run %d' % i)
 
-        dzres = DatazillaResult()
-        dzres.add_testsuite(suite)
-        for i in xrange(0, num_runs):
-            logger.debug('chrome run %d' % i)
+                if args.use_android:
+                    runner = AndroidRunner(app_name=args.chrome_path,
+                                           activity_name='.Main',
+                                           intent='android.intent.action.VIEW',
+                                           url=url,
+                                           device_id=args.use_android)
+                else:
+                    runner = ChromeRunner(binary=args.chrome_path, cmdargs=[url])
 
-            if args.use_android:
-                runner = AndroidRunner(app_name=args.chrome_path,
-                                       activity_name='.Main',
-                                       intent='android.intent.action.VIEW',
-                                       url=url,
-                                       device_id=args.use_android)
-            else:
-                runner = ChromeRunner(binary=args.chrome_path, cmdargs=[url])
+                version, results = runtest(logger, runner, timeout)
+                if results is None:
+                    logger.error('no results found')
+                    error = True
+                else:
+                    for result in results:
+                        results_to_post.append(formatresults(suite, result[name], platform,
+                                               'chrome.canary', result[value], version,
+                                               os_version, processor))
+                    logger.debug('chrome results: %s' % json.dumps(results))
 
-            version, results = runtest(logger, runner, timeout)
-            if results is None:
-                logger.error('no results found')
-                error = True
-            else:
-                for result in results:
-                    dzres.add_test_results(suite, result[name], [result[value]])
-                logger.debug('chrome results: %s' % json.dumps(results))
-
-        # if version exists, we must have at least some results
-        if version and args.post_results:
-            postresults(logger, 'chrome', 'canary', version, benchmark, dzres)
+    if args.post_results:
+        logger.debug('posting results...')
+        postresults(logger, results_to_post)
 
     # Cleanup previously installed Firefox
     if not args.use_b2g:

@@ -3,7 +3,7 @@
    "url": "webaudio-benchmark/index.html",
    "number_of_runs": 5,
    "timeout": 300,
-   "enabled": true,
+   "enabled": ["all"],
    "name": "name",
    "value": "duration"
   },
@@ -11,7 +11,7 @@
    "url": "Massive/index.html?autoRun=true,postToURL=/results",
    "number_of_runs": 5,
    "timeout": 2000,
-   "enabled": true,
+   "enabled": ["all"],
    "name": "benchmark",
    "value": "result"
   },
@@ -19,7 +19,7 @@
    "url": "Unity-WebGLBenchmark/index.html",
    "number_of_runs": 5,
    "timeout": 2000,
-   "enabled": false,
+   "enabled": [],
    "name": "benchmark",
    "value": "result"
   }
