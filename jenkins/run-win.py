@@ -27,12 +27,12 @@ chrome_path = os.path.expanduser('~') + '/AppData/Local/Google/Chrome SxS/Applic
 
 # Extract WebGLBenchmark files
 subprocess.call(['tar',
-                 'xvzf',
+                 'xzf',
                  'mozbench/static/Unity-WebGLBenchmark/Data/WebGLBenchmarks.data.tar.gz',
                  '-C',
                  'mozbench/static/Unity-WebGLBenchmark/Data/'])
 subprocess.call(['tar',
-                 'xvzf',
+                 'xzf',
                  'mozbench/static/Unity-WebGLBenchmark/Data/WebGLBenchmarks.js.tar.gz',
                  '-C',
                  'mozbench/static/Unity-WebGLBenchmark/Data/'])
