@@ -5,6 +5,11 @@ virtualenv venv
 python setup.py install
 FIREFOX_URL=http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central
 JENKINS_DIR=`dirname $0`
+
+# Extract WebGLBenchmark files
+tar xzf mozbench/static/Unity-WebGLBenchmark/Data/WebGLBenchmarks.data.tar.gz -C mozbench/static/Unity-WebGLBenchmark/Data/
+tar xzf mozbench/static/Unity-WebGLBenchmark/Data/WebGLBenchmarks.js.tar.gz -C mozbench/static/Unity-WebGLBenchmark/Data/
+
 VERSION=`python $JENKINS_DIR/firefox_version.py $FIREFOX_URL`
 if [ `uname` = 'Linux' ]; then
    python -m mozbench.mozbench --firefox-url $FIREFOX_URL/$VERSION.linux-x86_64.tar.bz2 --chrome-path google-chrome --log-mach=- --post-results

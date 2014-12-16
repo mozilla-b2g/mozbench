@@ -25,6 +25,18 @@ version = firefox_version.get_firefox_version(FIREFOX_URL)
 firefox_url = FIREFOX_URL + version + '.win32.installer.exe'
 chrome_path = os.path.expanduser('~') + '/AppData/Local/Google/Chrome SxS/Application/chrome.exe'
 
+# Extract WebGLBenchmark files
+subprocess.call(['tar',
+                 'xzf',
+                 'mozbench/static/Unity-WebGLBenchmark/Data/WebGLBenchmarks.data.tar.gz',
+                 '-C',
+                 'mozbench/static/Unity-WebGLBenchmark/Data/'])
+subprocess.call(['tar',
+                 'xzf',
+                 'mozbench/static/Unity-WebGLBenchmark/Data/WebGLBenchmarks.js.tar.gz',
+                 '-C',
+                 'mozbench/static/Unity-WebGLBenchmark/Data/'])
+
 args = ['--firefox-url', firefox_url,
         '--chrome-path', chrome_path,
         '--log-mach=-',
