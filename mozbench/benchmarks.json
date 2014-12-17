@@ -22,5 +22,13 @@
    "enabled": [],
    "name": "benchmark",
    "value": "result"
-  }
+  },
+  {"suite": "octane",
+   "url": "Octane/index.html",
+   "number_of_runs": 1,
+   "timeout": 2000,
+   "enabled": ["android"],
+   "name": "benchmark",
+   "value": "result"
+  },
 ]
