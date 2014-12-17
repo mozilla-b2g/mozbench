@@ -5,7 +5,7 @@ rm -rf venv
 virtualenv venv
 . venv/bin/activate
 python setup.py install
-FIREFOX_URL=http://ftp.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-android-api-10
+FIREFOX_URL=http://ftp.mozilla.org/pub/mozilla.org/mobile/nightly/latest-mozilla-central-android-api-11
 JENKINS_DIR=`dirname $0`
 VERSION=`python $JENKINS_DIR/firefox_version.py $FIREFOX_URL`
 
