@@ -43,6 +43,7 @@
   var latencyBenchmarks = ["Splay", "Mandreel"];
   var skipBenchmarks =
           typeof skipBenchmarks === "undefined" ? [] : skipBenchmarks;
+  var results = [];
 
   function ShowBox(name) {
     var box = document.getElementById("Box-" + name);
@@ -61,6 +62,12 @@
     console.log(name + ': ' + result);
     var box = document.getElementById("Result-" + name);
     box.innerHTML = result;
+
+    // Add score to results
+    results.push({
+      benchmark: name,
+      result: result
+    });
   }
 
   function AddError(name, error) {
@@ -86,6 +93,15 @@
     document.getElementById("bottom-text").style.visibility = 'visible';
     document.getElementById("inside-anchor").removeChild(document.getElementById("bar-appendix"));
     document.getElementById("alertbox").style.visibility = 'hidden';
+
+    // Add overall score to results
+    results.push({
+      benchmark: 'Octane score',
+      result: score
+    });
+
+    // Post results back to Mozbench
+    postResults();
   }
 
   function Run() {
@@ -128,6 +144,14 @@
 
   function Load() {
     setTimeout(CheckCompatibility, 200);
+  }
+
+  function postResults() {
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("POST", "/results", true);
+    xmlHttp.setRequestHeader("Content-type",
+                              "application/x-www-form-urlencoded");
+    xmlHttp.send("results=" + encodeURIComponent(JSON.stringify(results)));
   }
 </script>
 <!-- end Octane benchmark code -->
