@@ -19,7 +19,16 @@
    "url": "Unity-WebGLBenchmark/index.html",
    "number_of_runs": 5,
    "timeout": 2000,
+   "enabled": ["all"],
+   "name": "benchmark",
    "enabled": ["linux", "mac", "win"],
+   "value": "result"
+  },
+  {"suite": "octane",
+   "url": "Octane/index.html",
+   "number_of_runs": 5,
+   "timeout": 2000,
+   "enabled": ["android"],
    "name": "benchmark",
    "value": "result"
   }
