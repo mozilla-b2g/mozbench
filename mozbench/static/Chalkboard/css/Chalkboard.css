@@ -127,7 +127,7 @@ a:hover, a:visited:hover {
 
 @font-face {
 	font-family: 'GillesHandwriting';	
-	src: local('☺'), url('Fonts/GillesHandwriting.woff') format('woff');
+	src: local('☺'), url('GillesHandwriting.woff') format('woff');
 	font-weight: normal;
 	font-style: normal;
 }
