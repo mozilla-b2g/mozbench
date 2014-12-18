@@ -88,8 +88,10 @@ function allDone() {
   var result = document.getElementById("results");
   var str = "<table><thead><tr><td>Test name</td><td>Time in ms</td><td>Speedup vs. realtime</td><td>Sound</td></tr></thead>";
   var buffers_base = buffers.length;
+  var product_of_durations = 1.0;
   for (var i = 0 ; i < results.length; i++) {
     var r = results[i];
+    product_of_durations *= r.duration;
     str += "<tr><td>" + r.name + "</td>" +
                "<td>" + r.duration + "</td>"+
                "<td>" + Math.round((r.buffer.duration * 1000) / r.duration) + "x</td>"+
@@ -97,6 +99,11 @@ function allDone() {
           +"</tr>";
     buffers[buffers_base + i] = r.buffer;
   }
+  recordResult({
+    name: "Geometric Mean",
+    duration: Math.round(Math.pow(product_of_durations, 1.0/results.length)),
+    buffer: {}
+  });
   str += "</table>";
   result.innerHTML += str;
   result.addEventListener("click", function(e) {
