@@ -18,6 +18,7 @@ from mozlog.structured import (
 )
 import moznetwork
 from mozprocess import ProcessHandler
+import mozprofile
 import mozrunner
 import os
 import platform
@@ -58,12 +59,22 @@ class AndroidRunner(object):
         # Connect to the device
         self.device = mozdevice.ADBAndroid(self.device_id)
 
-        # Laungh Fennec
         self.device.stop_application(app_name=self.app_name)
-        self.device.launch_application(app_name=self.app_name,
-                                       activity_name=self.activity_name,
-                                       intent=self.intent,
-                                       url=self.url)
+
+        if 'fennec' in self.app_name:
+            profile_path = '/sdcard/mozbench-profile'
+            prefs = {'dom.max_script_run_time': 0}
+            self.install_profile(prefs, profile_path)
+            self.device.launch_fennec(app_name=self.app_name,
+                                      intent=self.intent,
+                                      extra_args={'--profile': profile_path},
+                                      url=self.url)
+        else:
+            self.device.launch_application(app_name=self.app_name,
+                                           activity_name=self.activity_name,
+                                           intent=self.intent,
+                                           extras={'--profile': profile_path},
+                                           url=self.url)
 
     def stop(self):
         self.device.stop_application(app_name=self.app_name)
@@ -71,6 +82,9 @@ class AndroidRunner(object):
     def wait(self):
         pass
 
+    def install_profile(self, prefs, path):
+        profile = mozprofile.Profile(preferences=prefs)
+        self.device.push(profile.profile, path)
 
 class B2GRunner(object):
 

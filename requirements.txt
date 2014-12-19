@@ -5,6 +5,7 @@ mozinstall==1.10
 mozlog==2.2
 moznetwork==0.24
 mozprocess==0.21
+mozprofile
 mozrunner==6.4
 wptserve==1.2.1
 mozdevice==0.44
