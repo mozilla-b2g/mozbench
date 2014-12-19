@@ -19,7 +19,7 @@
    "url": "Unity-WebGLBenchmark/index.html",
    "number_of_runs": 5,
    "timeout": 2000,
-   "enabled": ["linux", "mac", "win"],
+   "enabled": ["linux", "win"],
    "name": "benchmark",
    "value": "result"
   }
