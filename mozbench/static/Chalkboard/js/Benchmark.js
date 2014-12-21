@@ -99,3 +99,11 @@ function GetBrowserInformation() {
     else if (ua.indexOf('opera') > -1) { browserName = "Opera"; browserVersion = ""; }
     else if (ua.indexOf('safari') > -1) { browserName = "Apple Safari"; browserVersion = "" + parseFloat('' + ua.substring(ua.indexOf('safari') + 7)); }
 }
+
+ function postResults() {
+  var xmlHttp = new XMLHttpRequest();
+  xmlHttp.open("POST", "/results", true);
+  xmlHttp.setRequestHeader("Content-type",
+                            "application/x-www-form-urlencoded");
+  xmlHttp.send("results=" + encodeURIComponent(JSON.stringify(results)));
+}
