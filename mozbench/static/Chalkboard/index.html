@@ -10,7 +10,7 @@
         <link rel="stylesheet" type="text/css" href="css/ReturnAndShareControls.css" />
         <meta name="t_omni_demopage" content="1" />
     </head>
-    <body onload="Initialize()">
+    <body>
         <div id="DemoScreenreaderText">Thanks for checking out this Internet Explorer 10 Test Drive demo. This demo uses animation techniques to move (pan, zoom, and scale) an image around on the screen. The faster your browser and the smoother the chalkboard will feel.</div>
         <div id="ReturnAndShareControls"></div>
         <img id="EmptyChalkboard" src="Images/EmptyChalkboard.svg" />
@@ -33,7 +33,10 @@
         <script type="text/javascript" src="js/TestDriveCommon.js"></script>
         <script type="text/javascript" src="js/ReturnAndShareControls.js"></script>
         <script type="text/javascript">
-          RunBenchmark();
+          window.setTimeout(function () {
+            Initialize();
+            RunBenchmark();
+          }, 0);
         </script>
     </body>
 </html>
