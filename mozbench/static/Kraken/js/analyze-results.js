@@ -45,6 +45,8 @@ var stdErr = 0;
 var categoryStdErrs = {};
 var testStdErrsByCategory = {};
 
+var results = [];
+
 function initialize()
 {
     itemTotals = {total: []};
@@ -255,15 +257,41 @@ function printOutput()
         print("RESULTS (means and 95% confidence intervals)");
     print("-----------------------------------------------");
     print(resultLine(labelWidth, 0, "Total", meanWidth, mean, stdErr));
+
+    results.push({
+      benchmark: 'Total',
+      result: mean
+    });
+
     print("-----------------------------------------------");
     for (var category in categoryMeans) {
         print("");
         print(resultLine(labelWidth, 2, category, meanWidth, categoryMeans[category], categoryStdErrs[category]));
+
+        results.push({
+          benchmark: category,
+          result: categoryMeans[category]
+        });
+
         for (var test in testMeansByCategory[category]) {
             var shortName = test.replace(/^[^-]*-/, "");
             print(resultLine(labelWidth, 4, shortName, meanWidth, testMeansByCategory[category][test], testStdErrsByCategory[category][test]));
+
+            results.push({
+              benchmark: shortName,
+              result: testMeansByCategory[category][test]
+            });
         }
     }
+    postResults();
+}
+
+function postResults() {
+  var xmlHttp = new XMLHttpRequest();
+  xmlHttp.open("POST", "/results", true);
+  xmlHttp.setRequestHeader("Content-type",
+                            "application/x-www-form-urlencoded");
+  xmlHttp.send("results=" + encodeURIComponent(JSON.stringify(results)));
 }
 
 initialize();
