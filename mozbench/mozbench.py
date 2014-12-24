@@ -175,7 +175,7 @@ def cleanup_installation(logger, firefox_binary, use_android=None):
 
 
 def install_fennec(logger, url, device_id):
-    logger.debug('installing fennec')
+    logger.info('installing fennec')
 
     # Check if we have any device connected
     adb_host = mozdevice.ADBHost()
@@ -204,7 +204,7 @@ def install_fennec(logger, url, device_id):
 
 
 def install_firefox(logger, url, use_android):
-    logger.debug('installing firefox')
+    logger.info('installing firefox')
 
     if use_android:
         res = install_fennec(logger, url, use_android)
@@ -278,7 +278,7 @@ def postresults(logger, results):
         try:
             r = requests.post(INFLUXDB_URL + 'u=' + user + '&p=' + passwd,
                               data=json.dumps(results))
-            logger.debug('results posted: %s: %s' % (r.status_code, r.text))
+            logger.info('results posted: %s: %s' % (r.status_code, r.text))
             break
         except requests.exceptions.ConnectionError:
             pass
@@ -320,7 +320,7 @@ def cli(args):
         if firefox_binary is None:
             return 1
 
-    logger.debug('starting webserver')
+    logger.info('starting webserver')
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                'static'))
     httpd = wptserve.server.WebTestHttpd(host=moznetwork.get_ip(), port=8000,
@@ -360,15 +360,15 @@ def cli(args):
         # Check if benchmark is enabled for platform
         if not ('all' in benchmark['enabled'] or
                 platform in benchmark['enabled']):
-            logger.debug('Skipping disabled benchmark: %s for platform %s' %
+            logger.info('Skipping disabled benchmark: %s for platform %s' %
                          (suite, platform))
             continue
 
-        logger.debug('starting benchmark: %s' % suite)
+        logger.info('starting benchmark: %s' % suite)
 
         # Run firefox
         for i in xrange(0, num_runs):
-            logger.debug('firefox run %d' % i)
+            logger.info('firefox run %d' % i)
             if args.use_b2g:
                 runner = B2GRunner(cmdargs=[url])
             elif args.use_android:
@@ -389,12 +389,12 @@ def cli(args):
                     results_to_post.append(formatresults(suite, result[name], platform,
                                            'firefox.nightly', result[value], version,
                                            os_version, processor))
-                logger.debug('firefox results: %s' % json.dumps(results))
+                logger.info('firefox results: %s' % json.dumps(results))
 
         # Run chrome (if desired)
         if args.chrome_path is not None:
             for i in xrange(0, num_runs):
-                logger.debug('chrome run %d' % i)
+                logger.info('chrome run %d' % i)
 
                 if args.use_android:
                     runner = AndroidRunner(app_name=args.chrome_path,
@@ -414,10 +414,10 @@ def cli(args):
                         results_to_post.append(formatresults(suite, result[name], platform,
                                                'chrome.canary', result[value], version,
                                                os_version, processor))
-                    logger.debug('chrome results: %s' % json.dumps(results))
+                    logger.info('chrome results: %s' % json.dumps(results))
 
     if args.post_results:
-        logger.debug('posting results...')
+        logger.info('posting results...')
         postresults(logger, results_to_post)
 
     # Cleanup previously installed Firefox

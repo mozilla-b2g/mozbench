@@ -2,7 +2,7 @@ fxos_appgen==0.7
 marionette_client==0.7.10
 mozinfo==0.7
 mozinstall==1.10
-mozlog==2.2
+mozlog==2.9
 moznetwork==0.24
 mozprocess==0.21
 mozrunner==6.4
