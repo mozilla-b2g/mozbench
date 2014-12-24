@@ -7,8 +7,8 @@ var benchmarks = ['Mandelbrot GPU', 'Mandelbrot Script',
 var results = [];
 
 function processText(text) {
-  var test = text.split(':');            
-  
+  var test = text.split(':');
+
   if (test[0] === 'Overall') {
     // Add Overall result to results
     results.push({
@@ -27,9 +27,9 @@ function processText(text) {
       // Add benchmark result to results
       results.push({
         benchmark: test[0],
-        result: test[1]
+        result: parseFloat(test[1])
       });
-      break;        
+      break;
     }
   }
 }
@@ -37,9 +37,9 @@ function processText(text) {
 function postResults() {
   var xmlHttp = new XMLHttpRequest();
   xmlHttp.open("POST", "/results", true);
-  xmlHttp.setRequestHeader("Content-type", 
+  xmlHttp.setRequestHeader("Content-type",
                             "application/x-www-form-urlencoded");
   // We need to use encodeURIComponent because of the '&' in benchmark names.
-  xmlHttp.send("results=" + encodeURIComponent(JSON.stringify(results)));        
+  xmlHttp.send("results=" + encodeURIComponent(JSON.stringify(results)));
 }
 
