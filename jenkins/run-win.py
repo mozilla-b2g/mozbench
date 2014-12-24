@@ -40,5 +40,6 @@ subprocess.call(['tar',
 args = ['--firefox-url', firefox_url,
         '--chrome-path', chrome_path,
         '--log-mach=-',
+        '--log-mach-level=info',
         '--post-results']
 exit(subprocess.call(['venv/Scripts/python', '-m', 'mozbench.mozbench'] + args))
