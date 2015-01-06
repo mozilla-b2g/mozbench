@@ -288,7 +288,7 @@ def postresults(logger, results):
 def cli(args):
     global results
 
-    error = False
+    tests_ran = False
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--firefox-url', help='url to firefox installer',
@@ -383,8 +383,8 @@ def cli(args):
             version, results = runtest(logger, runner, timeout)
             if results is None:
                 logger.error('no results found')
-                error = True
             else:
+                tests_ran = True
                 for result in results:
                     results_to_post.append(formatresults(suite, result[name], platform,
                                            'firefox.nightly', result[value], version,
@@ -408,8 +408,8 @@ def cli(args):
                 version, results = runtest(logger, runner, timeout)
                 if results is None:
                     logger.error('no results found')
-                    error = True
                 else:
+                    tests_ran = True
                     for result in results:
                         results_to_post.append(formatresults(suite, result[name], platform,
                                                'chrome.canary', result[value], version,
@@ -424,7 +424,8 @@ def cli(args):
     if not args.use_b2g:
         cleanup_installation(logger, firefox_binary, args.use_android)
 
-    return 0 if not error else 1
+    # Only flag the job as failed if no tests ran at all
+    return 0 if tests_ran else 1
 
 if __name__ == "__main__":
     exit(cli(sys.argv[1:]))
