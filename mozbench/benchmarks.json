@@ -3,13 +3,13 @@
    "url": "webaudio-benchmark/index.html",
    "number_of_runs": 5,
    "timeout": 300,
-   "enabled": [],
+   "enabled": ["all"],
    "name": "name",
    "value": "duration"
   },
   {"suite": "massive",
    "url": "Massive/index.html?autoRun=true,postToURL=/results",
-   "number_of_runs": 1,
+   "number_of_runs": 5,
    "timeout": 2000,
    "enabled": ["all"],
    "name": "benchmark",
@@ -19,7 +19,7 @@
    "url": "Unity-WebGLBenchmark/index.html",
    "number_of_runs": 5,
    "timeout": 2000,
-   "enabled": [],
+   "enabled": ["linux", "win"],
    "name": "benchmark",
    "value": "result"
   },
@@ -27,7 +27,7 @@
   "url": "Chalkboard/index.html",
   "number_of_runs": 5,
   "timeout": 2000,
-  "enabled": [],
+  "enabled": ["android"],
   "name": "benchmark",
   "value": "result"
   },
@@ -43,7 +43,7 @@
    "url": "Kraken/index.html",
    "number_of_runs": 5,
    "timeout": 2000,
-   "enabled": [],
+   "enabled": ["android"],
    "name": "benchmark",
    "value": "result"
   }
