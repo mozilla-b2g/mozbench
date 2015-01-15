@@ -81,11 +81,15 @@ class B2GRunner(object):
         fxos_appgen.launch_app('browser')
 
         script = """
-          window.wrappedJSObject.Browser.navigate('%s');
+          setTimeout(function () {window.wrappedJSObject.Search.navigate('%s')}, 0);
         """
         m = marionette.Marionette('localhost', 2828)
         m.start_session()
-        browser = m.find_element('css selector', 'iframe[src="app://browser.gaiamobile.org/index.html"]')
+        # Note: if the browser is renamed again, the following code
+        # is helpful to find it
+        #for x in m.find_elements('css selector', 'iframe'):
+        #    print(x.id, x.get_attribute('src'))
+        browser = m.find_element('css selector', 'iframe[src="app://search.gaiamobile.org/newtab.html"]')
         m.switch_to_frame(browser)
         m.execute_script(script % self.cmdargs[0])
         m.delete_session()
