@@ -38,12 +38,12 @@ results = None
 
 class AndroidRunner(object):
 
-    def __init__(self, app_name, activity_name, intent, url, device_id):
+    def __init__(self, app_name, activity_name, intent, url, device_serial):
         self.app_name = app_name
         self.activity_name = activity_name
         self.intent = intent
         self.url = url
-        self.device_id = device_id if device_id != True else None
+        self.device_serial = device_serial
         self.device = None
 
     def start(self):
@@ -56,7 +56,7 @@ class AndroidRunner(object):
             return 1
 
         # Connect to the device
-        self.device = mozdevice.ADBAndroid(self.device_id)
+        self.device = mozdevice.ADBAndroid(self.device_serial)
 
         # Laungh Fennec
         self.device.stop_application(app_name=self.app_name)
@@ -74,11 +74,12 @@ class AndroidRunner(object):
 
 class B2GRunner(object):
 
-    def __init__(self, cmdargs=None):
+    def __init__(self, cmdargs=None, device_serial=None):
         self.cmdargs = cmdargs or []
+        self.device_serial = device_serial
 
     def start(self):
-        fxos_appgen.launch_app('browser')
+        fxos_appgen.launch_app('browser', device_serial=self.device_serial)
 
         script = """
           setTimeout(function () {window.wrappedJSObject.Search.navigate('%s')}, 0);
@@ -132,9 +133,9 @@ def run_command(cmd):
     return p.output
 
 
-def cleanup_android(logger):
+def cleanup_android(logger, device_serial=None):
     # Connect to the device
-    device = mozdevice.ADBAndroid(None)
+    device = mozdevice.ADBAndroid(device_serial)
 
     # Uninstall Fennec
     device.uninstall_app(app_name='org.mozilla.fennec')
@@ -147,11 +148,11 @@ def cleanup_android(logger):
         logger.error(e)
 
 
-def cleanup_installation(logger, firefox_binary, use_android=None):
+def cleanup_installation(logger, firefox_binary, use_android=None, device_serial=None):
 
     # Check if we're dealing with an Android device
     if use_android:
-        cleanup_android(logger)
+        cleanup_android(logger, device_serial)
         return
 
     folder_to_remove = ''
@@ -178,7 +179,7 @@ def cleanup_installation(logger, firefox_binary, use_android=None):
         logger.error(e)
 
 
-def install_fennec(logger, url, device_id):
+def install_fennec(logger, url, device_serial):
     logger.info('installing fennec')
 
     # Check if we have any device connected
@@ -189,10 +190,7 @@ def install_fennec(logger, url, device_id):
         return None
 
     # Connect to the device
-    if device_id == True:
-        device = mozdevice.ADBAndroid(None)
-    else:
-        device = mozdevice.ADBAndroid(device_id)
+    device = mozdevice.ADBAndroid(device_serial)
 
     # If Fennec istalled, uninstall
     if device.is_app_installed('org.mozilla.fennec'):
@@ -207,11 +205,11 @@ def install_fennec(logger, url, device_id):
     return True
 
 
-def install_firefox(logger, url, use_android):
+def install_firefox(logger, url, use_android, device_serial):
     logger.info('installing firefox')
 
     if use_android:
-        res = install_fennec(logger, url, use_android)
+        res = install_fennec(logger, url, device_serial)
         return res
 
     name, headers = '', ''
@@ -299,12 +297,15 @@ def cli(args):
                         default=None)
     parser.add_argument('--use-b2g', action='store_true',
                         help='Use marionette to run tests on firefox os')
-    parser.add_argument('--use-android', nargs='?', const=True, choices=['DEVICE ID'],
-                        help='Use AndroidRunner to run tests on Android')
+    parser.add_argument('--use-android', action='store_true',
+                        help='Use adb to run tests on Android')
     parser.add_argument('--chrome-path', help='path to chrome executable',
                         default=None)
     parser.add_argument('--post-results', action='store_true',
                         help='if specified, post results to datazilla')
+    parser.add_argument('--device-serial',
+                        help='serial number of the android or b2g device',
+                        default=None)
     commandline.add_logging_group(parser)
     args = parser.parse_args(args)
 
@@ -312,7 +313,7 @@ def cli(args):
     logger = commandline.setup_logging('mozbench', vars(args), {})
 
     if not args.use_b2g and not args.firefox_url:
-        logger.error('you must specify one of --use-marionette or ' +
+        logger.error('you must specify one of --use-b2g or ' +
                      '--firefox-url')
         return 1
 
@@ -320,7 +321,7 @@ def cli(args):
     firefox_binary = None
     if args.firefox_url:
         firefox_binary = install_firefox(logger, args.firefox_url,
-                                         args.use_android)
+                                         args.use_android, args.device_serial)
         if firefox_binary is None:
             return 1
 
@@ -349,7 +350,7 @@ def cli(args):
         platform = 'b2g'
     elif args.use_android:
         platform = 'android'
-        device = mozdevice.ADBAndroid(args.use_android if args.use_android != True else None)
+        device = mozdevice.ADBAndroid(args.device_serial)
         os_version = device.get_prop('ro.build.version.release')
         processor = device.get_prop('ro.product.cpu.abi')
 
@@ -374,13 +375,13 @@ def cli(args):
         for i in xrange(0, num_runs):
             logger.info('firefox run %d' % i)
             if args.use_b2g:
-                runner = B2GRunner(cmdargs=[url])
+                runner = B2GRunner(cmdargs=[url], device_serial=args.device_serial)
             elif args.use_android:
                 runner = AndroidRunner(app_name='org.mozilla.fennec',
                                        activity_name='.App',
                                        intent='android.intent.action.VIEW',
                                        url=url,
-                                       device_id=args.use_android)
+                                       device_serial=args.device_serial)
             else:
                 runner = mozrunner.FirefoxRunner(binary=firefox_binary,
                                                  cmdargs=[url])
@@ -426,7 +427,7 @@ def cli(args):
 
     # Cleanup previously installed Firefox
     if not args.use_b2g:
-        cleanup_installation(logger, firefox_binary, args.use_android)
+        cleanup_installation(logger, firefox_binary, args.use_android, args.device_serial)
 
     # Only flag the job as failed if no tests ran at all
     return 0 if tests_ran else 1
