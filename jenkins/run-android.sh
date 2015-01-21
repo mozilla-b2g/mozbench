@@ -1,6 +1,6 @@
 #!/bin/bash
-adb reboot
-adb wait-for-device
+adb -s $DEVICE_SERIAL reboot
+adb -s $DEVICE_SERIAL wait-for-device
 rm -rf venv
 virtualenv venv
 . venv/bin/activate
@@ -13,4 +13,4 @@ VERSION=`python $JENKINS_DIR/firefox_version.py $FIREFOX_URL`
 tar xzf mozbench/static/Unity-WebGLBenchmark/Data/WebGLBenchmarks.data.tar.gz -C mozbench/static/Unity-WebGLBenchmark/Data/
 tar xzf mozbench/static/Unity-WebGLBenchmark/Data/WebGLBenchmarks.js.tar.gz -C mozbench/static/Unity-WebGLBenchmark/Data/
 
-python -m mozbench.mozbench --firefox-url $FIREFOX_URL/$VERSION.android-arm.apk --use-android --log-mach=- --log-mach-level=info --post-results
+python -m mozbench.mozbench --firefox-url $FIREFOX_URL/$VERSION.android-arm.apk --use-android --device-serial $DEVICE_SERIAL --log-mach=- --log-mach-level=info --post-results
