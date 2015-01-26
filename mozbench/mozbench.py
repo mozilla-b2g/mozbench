@@ -403,10 +403,10 @@ def cli(args):
 
                 if args.use_android:
                     runner = AndroidRunner(app_name=args.chrome_path,
-                                           activity_name='.Main',
+                                           activity_name='com.google.android.apps.chrome.Main',
                                            intent='android.intent.action.VIEW',
                                            url=url,
-                                           device_id=args.use_android)
+                                           device_serial=args.device_serial)
                 else:
                     runner = ChromeRunner(binary=args.chrome_path, cmdargs=[url])
 
