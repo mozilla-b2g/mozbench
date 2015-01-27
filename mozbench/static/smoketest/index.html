@@ -1,0 +1,21 @@
+<html>
+<meta charset="utf-8">
+<head>
+</head>
+<body>
+<script type="text/javascript">
+
+  function onLoad() {
+    var results = [{"name": "worked", "value": true}];
+
+    var xmlHttp = new XMLHttpRequest();
+    xmlHttp.open("POST", "/results", true);
+    xmlHttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    xmlHttp.send("results=" + JSON.stringify(results));
+  }
+
+  window.onload = onLoad;
+
+</script>
+</body>
+</html>

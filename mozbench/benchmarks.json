@@ -1,4 +1,12 @@
 [
+  {"suite": "smoketest",
+   "url": "smoketest/index.html",
+   "number_of_runs": 1,
+   "timeout": 60,
+   "enabled": ["all"],
+   "name": "name",
+   "value": "value"
+  },
   {"suite": "webaudio-padenot",
    "url": "webaudio-benchmark/index.html",
    "number_of_runs": 5,
