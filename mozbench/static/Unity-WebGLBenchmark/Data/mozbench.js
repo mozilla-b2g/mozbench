@@ -5,6 +5,7 @@ var benchmarks = ['Mandelbrot GPU', 'Mandelbrot Script',
   'Physics Spheres', '2D Physics Spheres', '2D Physics Boxes', 'AI Agents'];
 
 var results = [];
+var product_of_results = 1.0;
 
 function processText(text) {
   var test = text.split(':');
@@ -13,7 +14,7 @@ function processText(text) {
     // Add Overall result to results
     results.push({
       benchmark: 'Overall',
-      result: test[1]
+      result: parseFloat(test[1])
     });
 
     // Post results back to Mozbench
@@ -29,12 +30,19 @@ function processText(text) {
         benchmark: test[0],
         result: parseFloat(test[1])
       });
+      product_of_results *= parseFloat(test[1]);
       break;
     }
   }
 }
 
 function postResults() {
+
+  results.push({
+    benchmark: "Geometric Mean",
+    result: Math.round(Math.pow(product_of_results, 1.0/results.length))
+  });
+
   var xmlHttp = new XMLHttpRequest();
   xmlHttp.open("POST", "/results", true);
   xmlHttp.setRequestHeader("Content-type",
