@@ -346,11 +346,19 @@
               "series": "benchmarks.massive.score.android.firefox.nightly",
               "query": "select distinct(value) from \"benchmarks.massive.score.android.firefox.nightly\" where $timeFilter group by time($interval) order asc",
               "alias": "Firefox Nightly"
+            },
+            {
+              "target": "",
+              "function": "distinct",
+              "column": "value",
+              "series": "benchmarks.massive.score.b2g.firefox.nightly",
+              "query": "select distinct(value) from \"benchmarks.massive.score.b2g.firefox.nightly\" where $timeFilter group by time($interval) order asc",
+              "alias": "B2G Flame"
             }
           ],
           "aliasColors": {},
           "aliasYAxis": {},
-          "title": "Massive Score - Android (Higher is better)",
+          "title": "Massive Score - Mobile (Higher is better)",
           "datasource": "graphite",
           "renderer": "flot",
           "annotate": {
@@ -698,11 +706,27 @@
               "series": "benchmarks.webaudio-padenot.Geometric Mean.android.firefox.nightly",
               "query": "select distinct(value) from \"benchmarks.webaudio-padenot.Geometric Mean.android.firefox.nightly\" where $timeFilter group by time($interval) order asc",
               "alias": "Firefox Nightly"
+            },
+            {
+              "target": "",
+              "function": "distinct",
+              "column": "value",
+              "series": "benchmarks.webaudio-padenot.Geometric Mean.b2g.firefox.nightly",
+              "query": "select distinct(value) from \"benchmarks.webaudio-padenot.Geometric Mean.b2g.firefox.nightly\" where $timeFilter group by time($interval) order asc",
+              "alias": "B2G Flame"
+            },
+            {
+              "target": "",
+              "function": "distinct",
+              "column": "value",
+              "series": "benchmarks.webaudio-padenot.Geometric Mean.android.chrome.canary",
+              "query": "select distinct(value) from \"benchmarks.webaudio-padenot.Geometric Mean.android.chrome.canary\" where $timeFilter group by time($interval) order asc",
+              "alias": "Chrome"
             }
           ],
           "aliasColors": {},
           "aliasYAxis": {},
-          "title": "WebAudio Score - Android (Lower is better)",
+          "title": "WebAudio Score - Mobile (Lower is better)",
           "datasource": "graphite",
           "renderer": "flot",
           "annotate": {
@@ -777,8 +801,8 @@
               "target": "randomWalk('random walk')",
               "function": "distinct",
               "column": "value",
-              "series": "benchmarks.unity-webgl.Overall.linux.firefox.nightly",
-              "query": "select distinct(value) from \"benchmarks.unity-webgl.Overall.linux.firefox.nightly\" where $timeFilter group by time($interval) order asc",
+              "series": "benchmarks.unity-webgl.Geometric Mean.linux.firefox.nightly",
+              "query": "select distinct(value) from \"benchmarks.unity-webgl.Geometric Mean.linux.firefox.nightly\" where $timeFilter group by time($interval) order asc",
               "alias": "Firefox Nightly",
               "interval": "1h",
               "fill": ""
@@ -787,8 +811,8 @@
               "target": "",
               "function": "distinct",
               "column": "value",
-              "series": "benchmarks.unity-webgl.Overall.linux.chrome.canary",
-              "query": "select distinct(value) from \"benchmarks.unity-webgl.Overall.linux.chrome.canary\" where $timeFilter group by time($interval) order asc",
+              "series": "benchmarks.unity-webgl.Geometric Mean.linux.chrome.canary",
+              "query": "select distinct(value) from \"benchmarks.unity-webgl.Geometric Mean.linux.chrome.canary\" where $timeFilter group by time($interval) order asc",
               "alias": "Chrome Canary",
               "interval": "",
               "fill": ""
@@ -872,16 +896,16 @@
               "target": "randomWalk('random walk')",
               "function": "distinct",
               "column": "value",
-              "series": "benchmarks.unity-webgl.Overall.win.firefox.nightly",
-              "query": "select distinct(value) from \"benchmarks.unity-webgl.Overall.win.firefox.nightly\" where $timeFilter group by time($interval) order asc",
+              "series": "benchmarks.unity-webgl.Geometric Mean.win.firefox.nightly",
+              "query": "select distinct(value) from \"benchmarks.unity-webgl.Geometric Mean.win.firefox.nightly\" where $timeFilter group by time($interval) order asc",
               "alias": "Firefox Nightly"
             },
             {
               "target": "",
               "function": "distinct",
               "column": "value",
-              "series": "benchmarks.unity-webgl.Overall.win.chrome.canary",
-              "query": "select distinct(value) from \"benchmarks.unity-webgl.Overall.win.chrome.canary\" where $timeFilter group by time($interval) order asc",
+              "series": "benchmarks.unity-webgl.Geometric Mean.win.chrome.canary",
+              "query": "select distinct(value) from \"benchmarks.unity-webgl.Geometric Mean.win.chrome.canary\" where $timeFilter group by time($interval) order asc",
               "alias": "Chrome Canary"
             }
           ],
@@ -965,6 +989,14 @@
               "series": "benchmarks.Kraken.Total.android.firefox.nightly",
               "query": "select distinct(value) from \"benchmarks.Kraken.Total.android.firefox.nightly\" where $timeFilter group by time($interval) order asc",
               "alias": "Firefox Nightly"
+            },
+            {
+              "target": "",
+              "function": "distinct",
+              "column": "value",
+              "series": "benchmarks.Kraken.Total.android.chrome.canary",
+              "query": "select distinct(value) from \"benchmarks.Kraken.Total.android.chrome.canary\" where $timeFilter group by time($interval) order asc",
+              "alias": "Chrome"
             }
           ],
           "aliasColors": {},
@@ -1047,6 +1079,14 @@
               "series": "benchmarks.chalkboard.Chalkboard score.android.firefox.nightly",
               "query": "select distinct(value) from \"benchmarks.chalkboard.Chalkboard score.android.firefox.nightly\" where $timeFilter group by time($interval) order asc",
               "alias": "Firefox Nightly"
+            },
+            {
+              "target": "",
+              "function": "distinct",
+              "column": "value",
+              "series": "benchmarks.chalkboard.Chalkboard score.android.chrome.canary",
+              "query": "select distinct(value) from \"benchmarks.chalkboard.Chalkboard score.android.chrome.canary\" where $timeFilter group by time($interval) order asc",
+              "alias": "Chrome"
             }
           ],
           "aliasColors": {},
