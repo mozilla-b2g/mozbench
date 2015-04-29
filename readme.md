@@ -14,7 +14,7 @@ make sure the path to virtual environment does not contain spaces.
 
 Then install the requirements:
 
-    pip -r requirements.txt
+    pip install -r requirements.txt
 
 #Running the benchmarks
 
