@@ -41,7 +41,7 @@ function recordResult(result) {
 }
 
 function benchmark(testcase, ended) {
-  var context = testcase.context;
+  var context = testcase.ctx;
   var start;
 
   context.oncomplete = function(e) {
@@ -89,6 +89,7 @@ function allDone() {
   var str = "<table><thead><tr><td>Test name</td><td>Time in ms</td><td>Speedup vs. realtime</td><td>Sound</td></tr></thead>";
   var buffers_base = buffers.length;
   var product_of_durations = 1.0;
+
   for (var i = 0 ; i < results.length; i++) {
     var r = results[i];
     product_of_durations *= r.duration;
@@ -132,10 +133,10 @@ function allDone() {
 
   document.getElementById("run-all").disabled = false;
 
-  var xmlHttp = new XMLHttpRequest();
-  xmlHttp.open("POST", "/results", true);
-  xmlHttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-  xmlHttp.send("results=" + JSON.stringify(results));
+  var xhr = new XMLHttpRequest();
+  xhr.open("POST", "/results", true);
+  xhr.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+  xhr.send("results=" + JSON.stringify(results));
 }
 
 function runOne(i) {
@@ -157,7 +158,9 @@ function runAll() {
 
 function initAll() {
   for (var i = 0; i < testcases_registered.length; i++) {
-    testcases[i] = testcases_registered[i]();
+    testcases[i] = {};
+    testcases[i].ctx = testcases_registered[i].func();
+    testcases[i].name = testcases_registered[i].name;
   }
 }
 
