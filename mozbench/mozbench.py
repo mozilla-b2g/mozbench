@@ -306,6 +306,9 @@ def cli(args):
     parser.add_argument('--device-serial',
                         help='serial number of the android or b2g device',
                         default=None)
+    parser.add_argument('--test-host',
+                        help='network interface on which to listen and serve',
+                        default=moznetwork.get_ip())
     commandline.add_logging_group(parser)
     args = parser.parse_args(args)
 
@@ -325,10 +328,10 @@ def cli(args):
         if firefox_binary is None:
             return 1
 
-    logger.info('starting webserver')
+    logger.info('starting webserver on %s' % args.test_host)
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                'static'))
-    httpd = wptserve.server.WebTestHttpd(host=moznetwork.get_ip(), port=8000,
+    httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=8000,
                                          routes=routes, doc_root=static_path)
     httpd.start()
 

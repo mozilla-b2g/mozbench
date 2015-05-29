@@ -10,4 +10,4 @@ python setup.py install
 tar xzf mozbench/static/Unity-WebGLBenchmark/Data/WebGLBenchmarks.data.tar.gz -C mozbench/static/Unity-WebGLBenchmark/Data/
 tar xzf mozbench/static/Unity-WebGLBenchmark/Data/WebGLBenchmarks.js.tar.gz -C mozbench/static/Unity-WebGLBenchmark/Data/
 
-python -m mozbench.mozbench --use-b2g --device-serial $DEVICE_SERIAL --log-mach=- --log-mach-level=info --post-results
+python -m mozbench.mozbench --use-b2g --device-serial $DEVICE_SERIAL --test-host $TEST_HOST --log-mach=- --log-mach-level=info --post-results
