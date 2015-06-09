@@ -306,6 +306,8 @@ def cli(args):
     parser.add_argument('--device-serial',
                         help='serial number of the android or b2g device',
                         default=None)
+    parser.add_argument('--smoketest', action='store_true',
+                        help='only run smoketest')
     parser.add_argument('--test-host',
                         help='network interface on which to listen and serve',
                         default=moznetwork.get_ip())
@@ -365,6 +367,9 @@ def cli(args):
         name = benchmark['name']
         value = benchmark['value']
 
+        if args.smoketest and suite != 'smoketest':
+            continue
+
         # Check if benchmark is enabled for platform
         if not ('all' in benchmark['enabled'] or
                 platform in benchmark['enabled']):
@@ -423,6 +428,11 @@ def cli(args):
                                                'chrome.canary', result[value], version,
                                                os_version, processor))
                     logger.info('chrome results: %s' % json.dumps(results))
+
+        if suite == 'smoketest' and not tests_ran:
+            logger.error('smoketest failed to produce results - skipping '
+                         'remaining tests')
+            break
 
     if args.post_results:
         logger.info('posting results...')
