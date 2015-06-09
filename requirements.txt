@@ -1,5 +1,6 @@
 fxos_appgen==0.14
 marionette_client==0.12
+mozdownload==1.17
 mozinfo==0.7
 mozinstall==1.10
 mozlog==2.9
@@ -9,4 +10,4 @@ mozprofile==0.24
 mozrunner==6.4
 wptserve==1.2.1
 mozdevice==0.44
-requests
+requests==2.7.0

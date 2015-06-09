@@ -132,53 +132,15 @@ def run_command(cmd):
     p.wait()
     return p.output
 
+
 def get_fennec_pkg_name(url):
     fennecPkg = zipfile.ZipFile(url)
     pkgNameFp = fennecPkg.open("package-name.txt")
     pkgName = pkgNameFp.readline()
     return pkgName.rstrip()
 
-def cleanup_android(logger, pkg_name, device_serial=None):
-    # Connect to the device
-    device = mozdevice.ADBAndroid(device_serial)
 
-    # Uninstall Fennec
-    device.uninstall_app(app_name=pkg_name)
-
-    # Remove APK
-    try:
-        os.remove('fennec.apk')
-    except OSError as e:
-        # We tried to remove an APK that does not exist
-        logger.error(e)
-
-
-def cleanup_desktop(logger, firefox_binary):
-    folder_to_remove = ''
-    file_to_remove = ''
-
-    # Let's check the OS and determine which folder and file to remove
-    if mozinfo.os == 'mac':
-        folder_to_remove = os.path.dirname(os.path.dirname(os.path.dirname(
-                                                           firefox_binary)))
-        file_to_remove = os.path.join(os.path.dirname(folder_to_remove),
-                                      'firefox.dmg')
-    else:
-        folder_to_remove = os.path.dirname(firefox_binary)
-        file_to_remove = os.path.join(os.path.dirname(folder_to_remove),
-                                      'firefox.exe')
-
-    try:
-        # Remove the folder
-        rmtree(folder_to_remove)
-        # Remove the file
-        os.remove(file_to_remove)
-    except OSError as e:
-        # We tried to remove a folder/file that did not exist
-        logger.error(e)
-
-
-def install_fennec(logger, url, pkg_name, device_serial):
+def install_fennec(logger, path, pkg_name, device_serial):
     logger.info('installing fennec')
 
     # Check if we have any device connected
@@ -191,39 +153,15 @@ def install_fennec(logger, url, pkg_name, device_serial):
     # Connect to the device
     device = mozdevice.ADBAndroid(device_serial)
 
-    # If Fennec istalled, uninstall
+    # If Fennec is installed, uninstall
     if device.is_app_installed(pkg_name):
         print("Removing fennec")
         device.uninstall_app(app_name=pkg_name)
 
-    # Fetch Fennec
-    name, headers = urllib.urlretrieve(url, 'fennec.apk')
-
     # Install Fennec
     print("Starting install fennec")
-    device.install_app(name)
-
+    device.install_app(path)
     return True
-
-
-def install_firefox(logger, url, use_android, device_serial):
-    logger.info('installing firefox')
-
-    name, headers = '', ''
-
-    if mozinfo.os == 'mac':
-        name, headers = urllib.urlretrieve(url, 'firefox.dmg')
-    else:
-        name, headers = urllib.urlretrieve(url, 'firefox.exe')
-
-    cmd = ['mozinstall', '-d', '.', name]
-    path = run_command(cmd)[0]
-
-    if not os.path.isfile(path):
-        logger.error('installation failed: path %s does not exist' % path)
-        path = None
-
-    return path
 
 
 def runtest(logger, runner, timeout):
@@ -290,7 +228,7 @@ def cli(args):
     tests_ran = False
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--firefox-url', help='url to firefox installer',
+    parser.add_argument('--firefox-path', help='path to firefox binary',
                         default=None)
     parser.add_argument('--use-b2g', action='store_true',
                         help='Use marionette to run tests on firefox os')
@@ -318,35 +256,25 @@ def cli(args):
     logging.basicConfig()
     logger = commandline.setup_logging('mozbench', vars(args), {})
 
-    if not args.use_b2g and not args.firefox_url:
+    if not args.use_b2g and not args.firefox_path:
         logger.error('you must specify one of --use-b2g or ' +
-                     '--firefox-url')
+                     '--firefox-path')
         return 1
 
-    if args.firefox_url:
-        use_android = args.firefox_url.endswith('.apk')
+    if args.firefox_path:
+        use_android = args.firefox_path.endswith('.apk')
     else:
         use_android = False
 
-    if not use_android and args.run_android_browser:
-        logger.warning('Stock Android browser only supported on Android')
-
-    if not use_android and args.run_dolphin:
-        logger.warning('Dolphin browser only supported on Android')
-
-    # install firefox (if necessary)
-    firefox_binary = None
-    fennec_pkg_name = None
-    if args.firefox_url:
-        if use_android:
-            fennec_pkg_name = get_fennec_pkg_name(args.firefox_url)
-            firefox_binary = install_fennec(logger, args.firefox_url,
-                                            fennec_pkg_name, args.device_serial)
-        else:
-            firefox_binary = install_firefox(logger, args.firefox_url)
-
-        if firefox_binary is None:
-            return 1
+    if use_android:
+        fennec_pkg_name = get_fennec_pkg_name(args.firefox_path)
+        firefox_binary = install_fennec(logger, args.firefox_path,
+                                        fennec_pkg_name, args.device_serial)
+    else:
+        if args.run_android_browser:
+            logger.warning('Stock Android browser only supported on Android')
+        if args.run_dolphin:
+            logger.warning('Dolphin browser only supported on Android')
 
     logger.info('starting webserver on %s' % args.test_host)
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -412,7 +340,7 @@ def cli(args):
                                        url=url,
                                        device_serial=args.device_serial)
             else:
-                runner = mozrunner.FirefoxRunner(binary=firefox_binary,
+                runner = mozrunner.FirefoxRunner(binary=args.firefox_path,
                                                  cmdargs=[url])
             version, results = runtest(logger, runner, timeout)
             if results is None:
@@ -505,15 +433,9 @@ def cli(args):
         logger.info('posting results...')
         postresults(logger, results_to_post)
 
-    # Cleanup previously installed Firefox
-    if args.firefox_url:
-        if use_android:
-            cleanup_android(logger, fennec_pkg_name, args.device_serial)
-        else:
-            cleanup_desktop(logger, firefox_binary)
-
     # Only flag the job as failed if no tests ran at all
     return 0 if tests_ran else 1
+
 
 if __name__ == "__main__":
     exit(cli(sys.argv[1:]))
