@@ -333,7 +333,7 @@ def cli(args):
     logger.info('starting webserver on %s' % args.test_host)
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                'static'))
-    httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=8000,
+    httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=8888,
                                          routes=routes, doc_root=static_path)
     httpd.start()
 

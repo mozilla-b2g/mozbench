@@ -1,4 +1,7 @@
 #!/bin/bash
+ps -e|grep adb|awk '{split($1,x," "); print(x[1])}'|xargs kill
+adb -s $DEVICE_SERIAL reboot
+adb -s $DEVICE_SERIAL wait-for-device
 rm -rf venv
 virtualenv venv
 . venv/bin/activate

@@ -12,6 +12,7 @@ tar xzf mozbench/static/Unity-WebGLBenchmark/Data/WebGLBenchmarks.js.tar.gz -C m
 
 VERSION=`python $JENKINS_DIR/firefox_version.py $FIREFOX_URL`
 if [ `uname` = 'Linux' ]; then
+   ps -e|grep adb|awk '{split($1,x," "); print(x[1])}'|xargs kill
    python -m mozbench.mozbench --firefox-url $FIREFOX_URL/$VERSION.linux-x86_64.tar.bz2 --chrome-path google-chrome --log-mach=- --log-mach-level=info --post-results
 elif [ `uname` = 'Darwin' ]; then
    rm -rf FirefoxNightly.app/
