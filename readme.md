@@ -49,6 +49,11 @@ package to use, as follows:
 
     python mozbench.py --firefox-url <url> --chrome-path com.android.chrome --log-mach=-
 
+To also run the tests on stock Android browser, specify the
+--run-android-browser argument, e.g.
+
+    python mozbench.py --firefox-url <url> --run-android-browser --log-mach=-
+
 To run the benchmarks on Firefox OS it is first necessary to flash the phone
 with the desired build to test. It can then be run using the following command
 from the mozbench directory:
