@@ -306,6 +306,8 @@ def cli(args):
     parser.add_argument('--device-serial',
                         help='serial number of the android or b2g device',
                         default=None)
+    parser.add_argument('--run-benchmarks',
+                        help='specify which benchmarks to run')
     parser.add_argument('--smoketest', action='store_true',
                         help='only run smoketest')
     parser.add_argument('--test-host',
@@ -371,7 +373,10 @@ def cli(args):
             continue
 
         # Check if benchmark is enabled for platform
-        if not ('all' in benchmark['enabled'] or
+        if args.run_benchmarks:
+            if not suite in args.run_benchmarks.strip().split(','):
+                continue
+        elif not ('all' in benchmark['enabled'] or
                 platform in benchmark['enabled']):
             logger.info('Skipping disabled benchmark: %s for platform %s' %
                          (suite, platform))

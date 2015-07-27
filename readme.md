@@ -35,8 +35,6 @@ On Linux, chrome should be in your path already:
 
     google-chrome
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 The --chrome-path argument is optional; if omitted the benchmarks will not
 be run on chrome. It is assumed that chrome is already installed and is being
 updated through the normal chrome update channels.
@@ -57,6 +55,13 @@ with the desired build to test. It can then be run using the following command
 from the mozbench directory:
 
     python mozbench.py --use-b2g --log-mach=-
+
+Which benchmarks to run for each platform is normally determined by the
+benchmarks.json file. It's possible to override this by using the
+--run-benchmarks option to specify a comma separated list of benchmarks to
+run. For instance to run just the smoketest and octane benchmarks use:
+
+    python mozbench.py --use-b2g --run-benchmarks smoketest,octane --log-mach=-
 
 **Note**: The Unity-WebGLBenchmark has some big files and because of that they
 had to be compressed. In order to run that benchmark go (from the project root
