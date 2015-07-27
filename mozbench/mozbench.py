@@ -297,8 +297,6 @@ def cli(args):
                         default=None)
     parser.add_argument('--use-b2g', action='store_true',
                         help='Use marionette to run tests on firefox os')
-    parser.add_argument('--use-android', action='store_true',
-                        help='Use adb to run tests on Android')
     parser.add_argument('--chrome-path', help='path to chrome executable',
                         default=None)
     parser.add_argument('--post-results', action='store_true',
@@ -324,11 +322,13 @@ def cli(args):
                      '--firefox-url')
         return 1
 
+    use_android = args.firefox_url.endswith('.apk')
+
     # install firefox (if necessary)
     firefox_binary = None
     if args.firefox_url:
         firefox_binary = install_firefox(logger, args.firefox_url,
-                                         args.use_android, args.device_serial)
+                                         use_android, args.device_serial)
         if firefox_binary is None:
             return 1
 
@@ -355,7 +355,7 @@ def cli(args):
     processor = mozinfo.processor
     if args.use_b2g:
         platform = 'b2g'
-    elif args.use_android:
+    elif use_android:
         platform = 'android'
         device = mozdevice.ADBAndroid(args.device_serial)
         os_version = device.get_prop('ro.build.version.release')
@@ -389,7 +389,7 @@ def cli(args):
             logger.info('firefox run %d' % i)
             if args.use_b2g:
                 runner = B2GRunner(cmdargs=[url], device_serial=args.device_serial)
-            elif args.use_android:
+            elif use_android:
                 runner = AndroidRunner(app_name='org.mozilla.fennec',
                                        activity_name='.App',
                                        intent='android.intent.action.VIEW',
@@ -414,7 +414,7 @@ def cli(args):
             for i in xrange(0, num_runs):
                 logger.info('chrome run %d' % i)
 
-                if args.use_android:
+                if use_android:
                     runner = AndroidRunner(app_name=args.chrome_path,
                                            activity_name='com.google.android.apps.chrome.Main',
                                            intent='android.intent.action.VIEW',
@@ -445,7 +445,7 @@ def cli(args):
 
     # Cleanup previously installed Firefox
     if not args.use_b2g:
-        cleanup_installation(logger, firefox_binary, args.use_android, args.device_serial)
+        cleanup_installation(logger, firefox_binary, use_android, args.device_serial)
 
     # Only flag the job as failed if no tests ran at all
     return 0 if tests_ran else 1
