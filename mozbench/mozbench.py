@@ -299,6 +299,8 @@ def cli(args):
                         help='Use marionette to run tests on firefox os')
     parser.add_argument('--run-android-browser', action='store_true',
                         help='Run benchmarks on stock Android browser')
+    parser.add_argument('--run-dolphin', action='store_true',
+                        help='Run benchmarks on Dolphin browser')
     parser.add_argument('--chrome-path', help='path to chrome executable',
                         default=None)
     parser.add_argument('--post-results', action='store_true',
@@ -325,6 +327,12 @@ def cli(args):
         return 1
 
     use_android = args.firefox_url.endswith('.apk')
+
+    if not use_android and args.run_android_browser:
+        logger.warning('Stock Android browser only supported on Android')
+
+    if not use_android and args.run_dolphin:
+        logger.warning('Dolphin browser only supported on Android')
 
     # install firefox (if necessary)
     firefox_binary = None
@@ -437,7 +445,7 @@ def cli(args):
                     logger.info('chrome results: %s' % json.dumps(results))
 
         # Run stock AOSP browser (if desired)
-        if args.run_android_browser:
+        if use_android and args.run_android_browser:
             for i in xrange(0, num_runs):
                 logger.info('android browser run %d' % i)
 
@@ -457,6 +465,29 @@ def cli(args):
                             result[name], platform, 'android-browser',
                             result[value], version, os_version, processor))
                     logger.info('android browser results: %s' %
+                                json.dumps(results))
+
+        # Run Dolphin browser (if desired)
+        if use_android and args.run_dolphin:
+            for i in xrange(0, num_runs):
+                logger.info('dolphin run %d' % i)
+
+                runner = AndroidRunner(app_name='mobi.mgeek.TunnyBrowser',
+                                       activity_name='.BrowserActivity',
+                                       intent='android.intent.action.VIEW',
+                                       url=url,
+                                       device_serial=args.device_serial)
+
+                version, results = runtest(logger, runner, timeout)
+                if results is None:
+                    logger.error('no results found')
+                else:
+                    tests_ran = True
+                    for result in results:
+                        results_to_post.append(formatresults(suite,
+                            result[name], platform, 'dolphin',
+                            result[value], version, os_version, processor))
+                    logger.info('dolphin results: %s' %
                                 json.dumps(results))
 
         if suite == 'smoketest' and not tests_ran:
