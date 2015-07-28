@@ -33,6 +33,7 @@ import zipfile
 import wptserve
 from subprocess import call
 from shutil import rmtree
+from resultRecorder import ResultRecorder
 
 INFLUXDB_URL = 'http://54.215.155.53:8086/db/mozbench/series?'
 
@@ -197,14 +198,6 @@ def runtest(logger, runner, timeout):
         return None, None
 
 
-def formatresults(suite, name, platform, browser, value, browser_version,
-                  os_version, processor):
-    table = 'benchmarks.' + '.'.join([suite, name, platform, browser])
-    return {'name': table,
-           'columns': ['value','browser-version', 'os-version', 'processor'],
-           'points': [[value, browser_version, os_version, processor]]}
-
-
 def postresults(logger, results):
 
     secret_path = os.path.join(os.path.expanduser('~'), 'influxdb-secret.txt')
@@ -251,6 +244,8 @@ def cli(args):
                         help='specify which benchmarks to run')
     parser.add_argument('--smoketest', action='store_true',
                         help='only run smoketest')
+    parser.add_argument('--json-result', help='store pure json result to file',
+                        default=None)
     parser.add_argument('--test-host',
                         help='network interface on which to listen and serve',
                         default=moznetwork.get_ip())
@@ -326,7 +321,7 @@ def cli(args):
 
     url_prefix = 'http://' + httpd.host + ':' + str(httpd.port) + '/'
 
-    results_to_post = []
+    result_recorder = ResultRecorder()
 
     with open(os.path.join(os.path.dirname(__file__), 'benchmarks.json')) as f:
         benchmarks = json.load(f)
@@ -342,6 +337,10 @@ def cli(args):
         device = mozdevice.ADBAndroid(args.device_serial)
         os_version = device.get_prop('ro.build.version.release')
         processor = device.get_prop('ro.product.cpu.abi')
+
+    result_recorder.platform= platform
+    result_recorder.os_version = os_version
+    result_recorder.processor = processor
 
     for benchmark in benchmarks:
         suite = benchmark['suite']
@@ -366,6 +365,11 @@ def cli(args):
 
         logger.info('starting benchmark: %s' % suite)
 
+        result_recorder.set_browser('firefox.nightly')
+        result_recorder.set_benchmark(suite)
+        result_recorder.set_result_name(name)
+        result_recorder.set_result_value_name(value)
+
         # Run firefox
         for i in xrange(0, num_runs):
             logger.info('firefox run %d' % i)
@@ -381,18 +385,21 @@ def cli(args):
                 runner = mozrunner.FirefoxRunner(binary=args.firefox_path,
                                                  cmdargs=[url])
             version, results = runtest(logger, runner, timeout)
+            result_recorder.set_browser_version(version)
             if results is None:
                 logger.error('no results found')
             else:
                 tests_ran = True
-                for result in results:
-                    results_to_post.append(formatresults(suite, result[name], platform,
-                                           'firefox.nightly', result[value], version,
-                                           os_version, processor))
+                result_recorder.add_results(results)
                 logger.info('firefox results: %s' % json.dumps(results))
 
         # Run chrome (if desired)
         if args.chrome_path is not None:
+            result_recorder.set_browser('chrome.canary')
+            result_recorder.set_benchmark(suite)
+            result_recorder.set_result_name(name)
+            result_recorder.set_result_value_name(value)
+
             for i in xrange(0, num_runs):
                 logger.info('chrome run %d' % i)
 
@@ -406,18 +413,21 @@ def cli(args):
                     runner = ChromeRunner(binary=args.chrome_path, cmdargs=[url])
 
                 version, results = runtest(logger, runner, timeout)
+                result_recorder.set_browser_version(version)
                 if results is None:
                     logger.error('no results found')
                 else:
                     tests_ran = True
-                    for result in results:
-                        results_to_post.append(formatresults(suite, result[name], platform,
-                                               'chrome.canary', result[value], version,
-                                               os_version, processor))
+                    result_recorder.add_results(results)
                     logger.info('chrome results: %s' % json.dumps(results))
 
         # Run stock AOSP browser (if desired)
         if use_android and args.run_android_browser:
+            result_recorder.set_browser('android-browser')
+            result_recorder.set_benchmark(suite)
+            result_recorder.set_result_name(name)
+            result_recorder.set_result_value_name(value)
+
             for i in xrange(0, num_runs):
                 logger.info('android browser run %d' % i)
 
@@ -428,19 +438,22 @@ def cli(args):
                                        device_serial=args.device_serial)
 
                 version, results = runtest(logger, runner, timeout)
+                result_recorder.set_browser_version(version)
                 if results is None:
                     logger.error('no results found')
                 else:
                     tests_ran = True
-                    for result in results:
-                        results_to_post.append(formatresults(suite,
-                            result[name], platform, 'android-browser',
-                            result[value], version, os_version, processor))
+                    result_recorder.add_results(results)
                     logger.info('android browser results: %s' %
                                 json.dumps(results))
 
         # Run Dolphin browser (if desired)
         if use_android and args.run_dolphin:
+            result_recorder.set_browser('dolphin')
+            result_recorder.set_benchmark(suite)
+            result_recorder.set_result_name(name)
+            result_recorder.set_result_value_name(value)
+
             for i in xrange(0, num_runs):
                 logger.info('dolphin run %d' % i)
 
@@ -451,16 +464,13 @@ def cli(args):
                                        device_serial=args.device_serial)
 
                 version, results = runtest(logger, runner, timeout)
+                result_recorder.set_browser_version(version)
                 if results is None:
                     logger.error('no results found')
                 else:
                     tests_ran = True
-                    for result in results:
-                        results_to_post.append(formatresults(suite,
-                            result[name], platform, 'dolphin',
-                            result[value], version, os_version, processor))
-                    logger.info('dolphin results: %s' %
-                                json.dumps(results))
+                    result_recorder.add_results(results)
+                    logger.info('dolphin results: %s' % json.dumps(results))
 
         if suite == 'smoketest' and not tests_ran:
             logger.error('smoketest failed to produce results - skipping '
@@ -469,7 +479,11 @@ def cli(args):
 
     if args.post_results:
         logger.info('posting results...')
-        postresults(logger, results_to_post)
+        postresults(logger, result_recorder.get_influxdb_results())
+
+    if args.json_result:
+        with open(args.json_result, 'w') as outputFile:
+            outputFile.write(json.dumps(result_recorder.get_results()) + '\n')
 
     # Only flag the job as failed if no tests ran at all
     return 0 if tests_ran else 1
