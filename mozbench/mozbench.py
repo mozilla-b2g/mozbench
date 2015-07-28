@@ -326,7 +326,10 @@ def cli(args):
                      '--firefox-url')
         return 1
 
-    use_android = args.firefox_url.endswith('.apk')
+    if args.firefox_url:
+        use_android = args.firefox_url.endswith('.apk')
+    else:
+        use_android = False
 
     if not use_android and args.run_android_browser:
         logger.warning('Stock Android browser only supported on Android')
