@@ -311,6 +311,8 @@ def cli(args):
                         help='specify which benchmarks to run')
     parser.add_argument('--smoketest', action='store_true',
                         help='only run smoketest')
+    parser.add_argument('--json-result', help='store pure json result to file',
+                        default=None)
     parser.add_argument('--test-host',
                         help='network interface on which to listen and serve',
                         default=moznetwork.get_ip())
@@ -374,12 +376,19 @@ def cli(args):
         processor = device.get_prop('ro.product.cpu.abi')
 
     for benchmark in benchmarks:
+        resultDict = {}
+
         suite = benchmark['suite']
         url = url_prefix + benchmark['url']
         num_runs = benchmark['number_of_runs']
         timeout = benchmark['timeout']
         name = benchmark['name']
         value = benchmark['value']
+
+        resultDict["suite"] = suite
+        resultDict["num_runs"] = num_runs
+        resultDict["name"] = name
+        resultDict["value"] = value
 
         if args.smoketest and suite != 'smoketest':
             continue
@@ -420,6 +429,17 @@ def cli(args):
                                            'firefox.nightly', result[value], version,
                                            os_version, processor))
                 logger.info('firefox results: %s' % json.dumps(results))
+
+                if (resultDict.get("results")):
+                    resultDict["results"].append(results[0])
+                else:
+                    resultDict["results"] = results
+
+
+        if args.json_result and results:
+            pprint(resultDict);
+            with open(args.json_result, "a") as outputFile:
+                outputFile.write(json.dumps(resultDict) + "\n")
 
         # Run chrome (if desired)
         if args.chrome_path is not None:
