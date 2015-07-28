@@ -14,4 +14,4 @@ VERSION=`python $JENKINS_DIR/firefox_version.py $FIREFOX_URL`
 tar xzf mozbench/static/Unity-WebGLBenchmark/Data/WebGLBenchmarks.data.tar.gz -C mozbench/static/Unity-WebGLBenchmark/Data/
 tar xzf mozbench/static/Unity-WebGLBenchmark/Data/WebGLBenchmarks.js.tar.gz -C mozbench/static/Unity-WebGLBenchmark/Data/
 
-python -m mozbench.mozbench --firefox-url $FIREFOX_URL/$VERSION.android-arm.apk --chrome-path com.android.chrome --device-serial $DEVICE_SERIAL --test-host $TEST_HOST --log-mach=- --log-mach-level=info --post-results
+python -m mozbench.mozbench --firefox-url $FIREFOX_URL/$VERSION.android-arm.apk --chrome-path com.android.chrome --run-android-browser --device-serial $DEVICE_SERIAL --test-host $TEST_HOST --log-mach=- --log-mach-level=info --post-results
