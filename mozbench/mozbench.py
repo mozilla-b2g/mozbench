@@ -93,7 +93,6 @@ class B2GRunner(object):
         browser = m.find_element('css selector', 'iframe[src="app://search.gaiamobile.org/newtab.html"]')
         m.switch_to_frame(browser)
         m.execute_script(script % self.cmdargs[0])
-        m.delete_session()
 
     def stop(self):
         pass
