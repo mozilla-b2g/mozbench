@@ -1,5 +1,5 @@
-fxos_appgen==0.12
-marionette_client==0.7.10
+fxos_appgen==0.14
+marionette_client==0.12
 mozinfo==0.7
 mozinstall==1.10
 mozlog==2.9
