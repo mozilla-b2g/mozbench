@@ -20,6 +20,7 @@ import moznetwork
 from mozprocess import ProcessHandler
 import mozrunner
 import os
+import random
 import platform
 import re
 import requests
@@ -344,15 +345,23 @@ def cli(args):
         if firefox_binary is None:
             return 1
 
-    logger.info('starting webserver on %s' % args.test_host)
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                'static'))
-    httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=8888,
-                                         routes=routes, doc_root=static_path)
+    # start http server and request handler
+    httpd = None
+    while (not httpd):
+        port = 10000 + random.randrange(0, 50000)
+        try:
+            httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=port,
+                                                 routes=routes, doc_root=static_path)
+        except:
+            pass
     httpd.start()
 
     httpd_logger = logging.getLogger("wptserve")
     httpd_logger.setLevel(logging.ERROR)
+
+    logger.info('starting webserver on %s:%s' %(httpd.host, str(httpd.port)))
 
     url_prefix = 'http://' + httpd.host + ':' + str(httpd.port) + '/'
 
