@@ -4,8 +4,10 @@
 
 import argparse
 import copy
+import random
 import fxos_appgen
 import json
+import socket
 import logging
 import marionette
 import mozinfo
@@ -138,27 +140,32 @@ def get_fennec_pkg_name(url):
 
 
 def install_fennec(logger, path, pkg_name, device_serial):
-    logger.info('installing fennec')
-
     # Check if we have any device connected
     adb_host = mozdevice.ADBHost()
     devices = adb_host.devices()
     if not devices:
-        logger.error('No devices found')
+        logger.error('no devices found')
         return None
 
     # Connect to the device
-    device = mozdevice.ADBAndroid(device_serial)
+    logger.info('connecting Android device')
+    try:
+        device = mozdevice.ADBAndroid(device_serial)
+        # If Fennec is installed, uninstall
+        if device.is_app_installed(pkg_name):
+            logger.info('fennec already installed, uninstall it first')
+            device.uninstall_app(app_name=pkg_name)
 
-    # If Fennec is installed, uninstall
-    if device.is_app_installed(pkg_name):
-        print("Removing fennec")
-        device.uninstall_app(app_name=pkg_name)
-
-    # Install Fennec
-    print("Starting install fennec")
-    device.install_app(path)
-    return True
+        # Install Fennec
+        logger.info('installing fennec')
+        device.install_app(path)
+        return True
+    except ValueError as e:
+        logger.error(e.message)
+        return False
+    except mozdevice.ADBTimeoutError as e:
+        logger.error('timeout while executing \'%s\'' % e.message)
+        return False
 
 
 def runtest(logger, runner, timeout):
@@ -247,6 +254,9 @@ def cli(args):
     parser.add_argument('--test-host',
                         help='network interface on which to listen and serve',
                         default=moznetwork.get_ip())
+    parser.add_argument('--test-port',
+                        help='port to host http server',
+                        default=None)
     commandline.add_logging_group(parser)
     args = parser.parse_args(args)
 
@@ -264,27 +274,55 @@ def cli(args):
         use_android = False
 
     if use_android:
+        logger.info('prepare for installing fennec')
         fennec_pkg_name = get_fennec_pkg_name(args.firefox_path)
-        firefox_binary = install_fennec(logger, args.firefox_path,
-                                        fennec_pkg_name, args.device_serial)
+        success = install_fennec(logger, args.firefox_path, fennec_pkg_name,
+                                 args.device_serial)
+        if not success:
+            logger.error('fennec installation fail')
+            return 1
+        logger.info('fennec installation succeed')
     else:
         if args.run_android_browser:
-            logger.warning('Stock Android browser only supported on Android')
+            logger.warning('stock Android browser only supported on Android')
         if args.run_dolphin:
-            logger.warning('Dolphin browser only supported on Android')
+            logger.warning('dolphin browser only supported on Android')
 
     logger.info('starting webserver on %s' % args.test_host)
 
     routes = [('POST', '/results', results_handler),
               ('GET', '/*', wptserve.handlers.file_handler)]
+
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                'static'))
-    httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=8888,
-                                         routes=routes, doc_root=static_path)
-    httpd.start()
+    # start http server and request handler
+    httpd = None
+    if args.test_port:
+        try:
+            port = int(args.test_port)
+            httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=port,
+                                                 routes=routes, doc_root=static_path)
+        except Exception as e:
+            logger.error(e.message)
+            return 1
+    else:
+        while httpd is None:
+            try:
+                port = 10000 + random.randrange(0, 50000)
+                httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=port,
+                                                     routes=routes, doc_root=static_path)
+            # pass if port number has been used, then try another one
+            except socket.error as e:
+                    pass
+            except Exception as e:
+                logger.error(e.message)
+                return 1
 
+    httpd.start()
     httpd_logger = logging.getLogger("wptserve")
     httpd_logger.setLevel(logging.ERROR)
+
+    logger.info('starting webserver on %s:%s' %(httpd.host, str(httpd.port)))
 
     url_prefix = 'http://' + httpd.host + ':' + str(httpd.port) + '/'
 
@@ -322,7 +360,7 @@ def cli(args):
                 continue
         elif not ('all' in benchmark['enabled'] or
                 platform in benchmark['enabled']):
-            logger.info('Skipping disabled benchmark: %s for platform %s' %
+            logger.info('skipping disabled benchmark: %s for platform %s' %
                          (suite, platform))
             continue
 
