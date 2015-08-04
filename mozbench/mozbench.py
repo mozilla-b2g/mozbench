@@ -359,6 +359,7 @@ def cli(args):
     url_prefix = 'http://' + httpd.host + ':' + str(httpd.port) + '/'
 
     results_to_post = []
+    json_result = {}
 
     with open(os.path.join(os.path.dirname(__file__), 'benchmarks.json')) as f:
         benchmarks = json.load(f)
@@ -375,8 +376,13 @@ def cli(args):
         os_version = device.get_prop('ro.build.version.release')
         processor = device.get_prop('ro.product.cpu.abi')
 
+    json_result['platform'] = platform
+    json_result['os_version'] = os_version
+    json_result['processor'] = processor
+    json_result['suites'] = []
+
     for benchmark in benchmarks:
-        resultDict = {}
+        json_suite_results = {}
 
         suite = benchmark['suite']
         url = url_prefix + benchmark['url']
@@ -385,10 +391,11 @@ def cli(args):
         name = benchmark['name']
         value = benchmark['value']
 
-        resultDict["suite"] = suite
-        resultDict["num_runs"] = num_runs
-        resultDict["name"] = name
-        resultDict["value"] = value
+        json_suite_results['name'] = suite
+        json_suite_results['num_runs'] = num_runs
+        json_suite_results['result_name'] = name
+        json_suite_results['result_value'] = value
+        json_suite_results['results'] = []
 
         if args.smoketest and suite != 'smoketest':
             continue
@@ -420,6 +427,8 @@ def cli(args):
                 runner = mozrunner.FirefoxRunner(binary=firefox_binary,
                                                  cmdargs=[url])
             version, results = runtest(logger, runner, timeout)
+            json_suite_results['version'] = version
+            json_suite_results['browser'] = 'firefox.nightly'
             if results is None:
                 logger.error('no results found')
             else:
@@ -429,20 +438,13 @@ def cli(args):
                                            'firefox.nightly', result[value], version,
                                            os_version, processor))
                 logger.info('firefox results: %s' % json.dumps(results))
+                json_suite_results["results"].append(copy.deepcopy(results))
 
-                if (resultDict.get("results")):
-                    resultDict["results"].append(results[0])
-                else:
-                    resultDict["results"] = results
-
-
-        if args.json_result and results:
-            pprint(resultDict);
-            with open(args.json_result, "a") as outputFile:
-                outputFile.write(json.dumps(resultDict) + "\n")
+        json_result['suites'].append(json_suite_results.copy())
 
         # Run chrome (if desired)
         if args.chrome_path is not None:
+            json_suite_results['results'] = []
             for i in xrange(0, num_runs):
                 logger.info('chrome run %d' % i)
 
@@ -456,6 +458,8 @@ def cli(args):
                     runner = ChromeRunner(binary=args.chrome_path, cmdargs=[url])
 
                 version, results = runtest(logger, runner, timeout)
+                json_suite_results['version'] = version
+                json_suite_results['browser'] = 'chrome.canary'
                 if results is None:
                     logger.error('no results found')
                 else:
@@ -465,9 +469,14 @@ def cli(args):
                                                'chrome.canary', result[value], version,
                                                os_version, processor))
                     logger.info('chrome results: %s' % json.dumps(results))
+                    json_suite_results["results"].append(copy.deepcopy(results))
+
+        if args.chrome_path is not None:
+            json_result['suites'].append(json_suite_results.copy())
 
         # Run stock AOSP browser (if desired)
         if use_android and args.run_android_browser:
+            json_suite_results['results'] = []
             for i in xrange(0, num_runs):
                 logger.info('android browser run %d' % i)
 
@@ -478,6 +487,8 @@ def cli(args):
                                        device_serial=args.device_serial)
 
                 version, results = runtest(logger, runner, timeout)
+                json_suite_results['version'] = version
+                json_suite_results['browser'] = 'android-browser'
                 if results is None:
                     logger.error('no results found')
                 else:
@@ -488,9 +499,14 @@ def cli(args):
                             result[value], version, os_version, processor))
                     logger.info('android browser results: %s' %
                                 json.dumps(results))
+                    json_suite_results["results"].append(copy.deepcopy(results))
+
+        if use_android and args.run_android_browser:
+            json_result['suites'].append(json_suite_results.copy())
 
         # Run Dolphin browser (if desired)
         if use_android and args.run_dolphin:
+            json_suite_results['results'] = []
             for i in xrange(0, num_runs):
                 logger.info('dolphin run %d' % i)
 
@@ -501,6 +517,8 @@ def cli(args):
                                        device_serial=args.device_serial)
 
                 version, results = runtest(logger, runner, timeout)
+                json_suite_results['version'] = version
+                json_suite_results['browser'] = 'dolphin'
                 if results is None:
                     logger.error('no results found')
                 else:
@@ -511,6 +529,10 @@ def cli(args):
                             result[value], version, os_version, processor))
                     logger.info('dolphin results: %s' %
                                 json.dumps(results))
+                    json_suite_results["results"].append(copy.deepcopy(results))
+
+        if use_android and args.run_dolphin:
+            json_result['suites'].append(json_suite_results.copy())
 
         if suite == 'smoketest' and not tests_ran:
             logger.error('smoketest failed to produce results - skipping '
@@ -520,6 +542,10 @@ def cli(args):
     if args.post_results:
         logger.info('posting results...')
         postresults(logger, results_to_post)
+
+    if args.json_result:
+        with open(args.json_result, "w") as outputFile:
+            outputFile.write(json.dumps(json_result) + "\n")
 
     # Cleanup previously installed Firefox
     if not args.use_b2g:
