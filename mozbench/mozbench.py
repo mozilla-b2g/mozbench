@@ -147,13 +147,7 @@ def cleanup_android(logger, device_serial=None):
         logger.error(e)
 
 
-def cleanup_installation(logger, firefox_binary, use_android=None, device_serial=None):
-
-    # Check if we're dealing with an Android device
-    if use_android:
-        cleanup_android(logger, device_serial)
-        return
-
+def cleanup_desktop(logger, firefox_binary):
     folder_to_remove = ''
     file_to_remove = ''
 
@@ -206,10 +200,6 @@ def install_fennec(logger, url, device_serial):
 
 def install_firefox(logger, url, use_android, device_serial):
     logger.info('installing firefox')
-
-    if use_android:
-        res = install_fennec(logger, url, device_serial)
-        return res
 
     name, headers = '', ''
 
@@ -339,8 +329,12 @@ def cli(args):
     # install firefox (if necessary)
     firefox_binary = None
     if args.firefox_url:
-        firefox_binary = install_firefox(logger, args.firefox_url,
-                                         use_android, args.device_serial)
+        if use_android:
+            firefox_binary = install_fennec(logger, args.firefox_url,
+                                            args.device_serial)
+        else:
+            firefox_binary = install_firefox(logger, args.firefox_url)
+
         if firefox_binary is None:
             return 1
 
@@ -502,8 +496,11 @@ def cli(args):
         postresults(logger, results_to_post)
 
     # Cleanup previously installed Firefox
-    if not args.use_b2g:
-        cleanup_installation(logger, firefox_binary, use_android, args.device_serial)
+    if args.firefox_url:
+        if use_android:
+            cleanup_android(logger, args.device_serial)
+        else:
+            cleanup_desktop(logger, firefox_binary)
 
     # Only flag the job as failed if no tests ran at all
     return 0 if tests_ran else 1
