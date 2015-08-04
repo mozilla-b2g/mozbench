@@ -27,6 +27,7 @@ import sys
 import time
 import urllib
 import wait
+import zipfile
 import wptserve
 from subprocess import call
 from shutil import rmtree
@@ -131,6 +132,11 @@ def run_command(cmd):
     p.wait()
     return p.output
 
+def get_fennec_pkg_name(url):
+    fennecPkg = zipfile.ZipFile(url)
+    pkgNameFp = fennecPkg.open("package-name.txt")
+    pkgName = pkgNameFp.readline()
+    return pkgName.rstrip()
 
 def cleanup_android(logger, device_serial=None):
     # Connect to the device
