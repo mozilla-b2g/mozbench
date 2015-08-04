@@ -138,12 +138,12 @@ def get_fennec_pkg_name(url):
     pkgName = pkgNameFp.readline()
     return pkgName.rstrip()
 
-def cleanup_android(logger, device_serial=None):
+def cleanup_android(logger, pkg_name, device_serial=None):
     # Connect to the device
     device = mozdevice.ADBAndroid(device_serial)
 
     # Uninstall Fennec
-    device.uninstall_app(app_name='org.mozilla.fennec')
+    device.uninstall_app(app_name=pkg_name)
 
     # Remove APK
     try:
@@ -178,7 +178,7 @@ def cleanup_desktop(logger, firefox_binary):
         logger.error(e)
 
 
-def install_fennec(logger, url, device_serial):
+def install_fennec(logger, url, pkg_name, device_serial):
     logger.info('installing fennec')
 
     # Check if we have any device connected
@@ -192,13 +192,15 @@ def install_fennec(logger, url, device_serial):
     device = mozdevice.ADBAndroid(device_serial)
 
     # If Fennec istalled, uninstall
-    if device.is_app_installed('org.mozilla.fennec'):
-        device.uninstall_app(app_name='org.mozilla.fennec')
+    if device.is_app_installed(pkg_name):
+        print("Removing fennec")
+        device.uninstall_app(app_name=pkg_name)
 
     # Fetch Fennec
     name, headers = urllib.urlretrieve(url, 'fennec.apk')
 
     # Install Fennec
+    print("Starting install fennec")
     device.install_app(name)
 
     return True
@@ -334,10 +336,12 @@ def cli(args):
 
     # install firefox (if necessary)
     firefox_binary = None
+    fennec_pkg_name = None
     if args.firefox_url:
         if use_android:
+            fennec_pkg_name = get_fennec_pkg_name(args.firefox_url)
             firefox_binary = install_fennec(logger, args.firefox_url,
-                                            args.device_serial)
+                                            fennec_pkg_name, args.device_serial)
         else:
             firefox_binary = install_firefox(logger, args.firefox_url)
 
@@ -402,7 +406,7 @@ def cli(args):
             if args.use_b2g:
                 runner = B2GRunner(cmdargs=[url], device_serial=args.device_serial)
             elif use_android:
-                runner = AndroidRunner(app_name='org.mozilla.fennec',
+                runner = AndroidRunner(app_name=fennec_pkg_name,
                                        activity_name='.App',
                                        intent='android.intent.action.VIEW',
                                        url=url,
@@ -504,7 +508,7 @@ def cli(args):
     # Cleanup previously installed Firefox
     if args.firefox_url:
         if use_android:
-            cleanup_android(logger, args.device_serial)
+            cleanup_android(logger, fennec_pkg_name, args.device_serial)
         else:
             cleanup_desktop(logger, firefox_binary)
 
