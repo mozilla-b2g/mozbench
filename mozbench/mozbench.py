@@ -27,6 +27,7 @@ import sys
 import time
 import urllib
 import wait
+import zipfile
 import wptserve
 from subprocess import call
 from shutil import rmtree
@@ -131,13 +132,18 @@ def run_command(cmd):
     p.wait()
     return p.output
 
+def get_fennec_pkg_name(url):
+    fennecPkg = zipfile.ZipFile(url)
+    pkgNameFp = fennecPkg.open("package-name.txt")
+    pkgName = pkgNameFp.readline()
+    return pkgName.rstrip()
 
-def cleanup_android(logger, device_serial=None):
+def cleanup_android(logger, pkg_name, device_serial=None):
     # Connect to the device
     device = mozdevice.ADBAndroid(device_serial)
 
     # Uninstall Fennec
-    device.uninstall_app(app_name='org.mozilla.fennec')
+    device.uninstall_app(app_name=pkg_name)
 
     # Remove APK
     try:
@@ -147,13 +153,7 @@ def cleanup_android(logger, device_serial=None):
         logger.error(e)
 
 
-def cleanup_installation(logger, firefox_binary, use_android=None, device_serial=None):
-
-    # Check if we're dealing with an Android device
-    if use_android:
-        cleanup_android(logger, device_serial)
-        return
-
+def cleanup_desktop(logger, firefox_binary):
     folder_to_remove = ''
     file_to_remove = ''
 
@@ -178,7 +178,7 @@ def cleanup_installation(logger, firefox_binary, use_android=None, device_serial
         logger.error(e)
 
 
-def install_fennec(logger, url, device_serial):
+def install_fennec(logger, url, pkg_name, device_serial):
     logger.info('installing fennec')
 
     # Check if we have any device connected
@@ -192,13 +192,15 @@ def install_fennec(logger, url, device_serial):
     device = mozdevice.ADBAndroid(device_serial)
 
     # If Fennec istalled, uninstall
-    if device.is_app_installed('org.mozilla.fennec'):
-        device.uninstall_app(app_name='org.mozilla.fennec')
+    if device.is_app_installed(pkg_name):
+        print("Removing fennec")
+        device.uninstall_app(app_name=pkg_name)
 
     # Fetch Fennec
     name, headers = urllib.urlretrieve(url, 'fennec.apk')
 
     # Install Fennec
+    print("Starting install fennec")
     device.install_app(name)
 
     return True
@@ -206,10 +208,6 @@ def install_fennec(logger, url, device_serial):
 
 def install_firefox(logger, url, use_android, device_serial):
     logger.info('installing firefox')
-
-    if use_android:
-        res = install_fennec(logger, url, device_serial)
-        return res
 
     name, headers = '', ''
 
@@ -338,9 +336,15 @@ def cli(args):
 
     # install firefox (if necessary)
     firefox_binary = None
+    fennec_pkg_name = None
     if args.firefox_url:
-        firefox_binary = install_firefox(logger, args.firefox_url,
-                                         use_android, args.device_serial)
+        if use_android:
+            fennec_pkg_name = get_fennec_pkg_name(args.firefox_url)
+            firefox_binary = install_fennec(logger, args.firefox_url,
+                                            fennec_pkg_name, args.device_serial)
+        else:
+            firefox_binary = install_firefox(logger, args.firefox_url)
+
         if firefox_binary is None:
             return 1
 
@@ -402,7 +406,7 @@ def cli(args):
             if args.use_b2g:
                 runner = B2GRunner(cmdargs=[url], device_serial=args.device_serial)
             elif use_android:
-                runner = AndroidRunner(app_name='org.mozilla.fennec',
+                runner = AndroidRunner(app_name=fennec_pkg_name,
                                        activity_name='.App',
                                        intent='android.intent.action.VIEW',
                                        url=url,
@@ -502,8 +506,11 @@ def cli(args):
         postresults(logger, results_to_post)
 
     # Cleanup previously installed Firefox
-    if not args.use_b2g:
-        cleanup_installation(logger, firefox_binary, use_android, args.device_serial)
+    if args.firefox_url:
+        if use_android:
+            cleanup_android(logger, fennec_pkg_name, args.device_serial)
+        else:
+            cleanup_desktop(logger, firefox_binary)
 
     # Only flag the job as failed if no tests ran at all
     return 0 if tests_ran else 1
