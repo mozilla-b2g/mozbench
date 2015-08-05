@@ -249,6 +249,9 @@ def cli(args):
     parser.add_argument('--test-host',
                         help='network interface on which to listen and serve',
                         default=moznetwork.get_ip())
+    parser.add_argument('--test-port',
+                        help='port to host http server',
+                        default=8888)
     commandline.add_logging_group(parser)
     args = parser.parse_args(args)
 
@@ -279,15 +282,12 @@ def cli(args):
                                                'static'))
     # start http server and request handler
     httpd = None
-    while (not httpd):
-        port = 10000 + random.randrange(0, 50000)
-        try:
-            httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=port,
-                                                 routes=routes, doc_root=static_path)
-        except:
-            pass
+    try:
+        httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=args.test_port,
+                                             routes=routes, doc_root=static_path)
+    except:
+        return 1
     httpd.start()
-
     httpd_logger = logging.getLogger("wptserve")
     httpd_logger.setLevel(logging.ERROR)
 
