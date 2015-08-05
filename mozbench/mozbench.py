@@ -148,7 +148,7 @@ def install_fennec(logger, path, pkg_name, device_serial):
     adb_host = mozdevice.ADBHost()
     devices = adb_host.devices()
     if not devices:
-        logger.error('No devices found')
+        logger.error('no devices found')
         return None
 
     # Connect to the device
@@ -273,9 +273,9 @@ def cli(args):
                                         fennec_pkg_name, args.device_serial)
     else:
         if args.run_android_browser:
-            logger.warning('Stock Android browser only supported on Android')
+            logger.warning('stock Android browser only supported on Android')
         if args.run_dolphin:
-            logger.warning('Dolphin browser only supported on Android')
+            logger.warning('dolphin browser only supported on Android')
 
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                'static'))
@@ -331,7 +331,7 @@ def cli(args):
                 continue
         elif not ('all' in benchmark['enabled'] or
                 platform in benchmark['enabled']):
-            logger.info('Skipping disabled benchmark: %s for platform %s' %
+            logger.info('skipping disabled benchmark: %s for platform %s' %
                          (suite, platform))
             continue
 
