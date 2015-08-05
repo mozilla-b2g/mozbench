@@ -294,7 +294,7 @@ def cli(args):
     # start http server and request handler
     httpd = None
     try:
-        httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=args.test_port,
+        httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=int(args.test_port),
                                              routes=routes, doc_root=static_path)
     except:
         return 1
