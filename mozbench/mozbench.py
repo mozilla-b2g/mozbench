@@ -20,7 +20,6 @@ import moznetwork
 from mozprocess import ProcessHandler
 import mozrunner
 import os
-import random
 import platform
 import re
 import requests
