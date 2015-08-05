@@ -17,13 +17,23 @@ execfile('venv/Scripts/activate_this.py', dict(__file__='venv/Scripts/activate_t
 # Install requirements
 subprocess.call(['venv/Scripts/python', 'setup.py', 'install'])
 
-# Run benchmarks
-# TODO: We should pull this from an environment variable so that it can
-#       be easily specified as part of the Jenkins job.
-FIREFOX_URL= 'http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/latest-mozilla-central/'
-version = firefox_version.get_firefox_version(FIREFOX_URL)
-firefox_url = FIREFOX_URL + version + '.win32.installer.exe'
-chrome_path = os.path.expanduser('~') + '/AppData/Local/Google/Chrome SxS/Application/chrome.exe'
+# Download and install firefox
+try:
+    os.remove('firefox.exe')
+except OSError:
+    pass
+
+try:
+    shutil.rmtree('firefox')
+except OSError:
+    pass
+
+subprocess.call(['mozdownload',
+                 '--type', 'daily',
+                 '--platform', 'win32',
+                 '--destination', 'firefox.exe'])
+
+subprocess.call(['mozinstall', '-d', '.', 'firefox.exe']
 
 # Extract WebGLBenchmark files
 subprocess.call(['tar',
@@ -37,7 +47,10 @@ subprocess.call(['tar',
                  '-C',
                  'mozbench/static/Unity-WebGLBenchmark/Data/'])
 
-args = ['--firefox-url', firefox_url,
+# Run the benchmarks
+firefox_path = os.path.realpath(os.path.join('firefox', 'firefox.exe'))
+chrome_path = os.path.expanduser('~') + '/AppData/Local/Google/Chrome SxS/Application/chrome.exe'
+args = ['--firefox-path', firefox_path,
         '--chrome-path', chrome_path,
         '--log-mach=-',
         '--log-mach-level=info',
