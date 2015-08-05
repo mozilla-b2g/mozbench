@@ -14,7 +14,7 @@ if [ `uname` = 'Linux' ]; then
    ps -e|grep adb|awk '{split($1,x," "); print(x[1])}'|xargs kill
    mozdownload --type daily --destination firefox.exe
    FIREFOX_PATH=`mozinstall -d . firefox.exe`
-   python -m mozbench.mozbench --firefox-path $FIREFOX_PATH --chrome-path google-chrome --log-mach=- --log-mach-level=info --post-results --smoketest
+   python -m mozbench.mozbench --firefox-path $FIREFOX_PATH --chrome-path google-chrome --log-mach=- --log-mach-level=info --post-results
 elif [ `uname` = 'Darwin' ]; then
    rm firefox.dmg
    rm -rf FirefoxNightly.app/
