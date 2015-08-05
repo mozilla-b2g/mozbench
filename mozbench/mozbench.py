@@ -150,17 +150,24 @@ def install_fennec(logger, path, pkg_name, device_serial):
         return None
 
     # Connect to the device
-    device = mozdevice.ADBAndroid(device_serial)
+    logger.info('connecting Android device')
+    try:
+        device = mozdevice.ADBAndroid(device_serial)
+        # If Fennec is installed, uninstall
+        if device.is_app_installed(pkg_name):
+            logger.info('fennec already installed, uninstall it first')
+            device.uninstall_app(app_name=pkg_name)
 
-    # If Fennec is installed, uninstall
-    if device.is_app_installed(pkg_name):
-        logger.info('fennec already installed, uninstall it first')
-        device.uninstall_app(app_name=pkg_name)
-
-    # Install Fennec
-    logger.info('installing fennec')
-    device.install_app(path)
-    return True
+        # Install Fennec
+        logger.info('installing fennec')
+        device.install_app(path)
+        return True
+    except ValueError as e:
+        logger.error(e.message)
+        return False
+    except mozdevice.ADBTimeoutError as e:
+        logger.error('timeout while executing \'%s\'' % e.message)
+        return False
 
 
 def runtest(logger, runner, timeout):
@@ -269,9 +276,14 @@ def cli(args):
         use_android = False
 
     if use_android:
+        logger.info('prepare for installing fennec')
         fennec_pkg_name = get_fennec_pkg_name(args.firefox_path)
-        firefox_binary = install_fennec(logger, args.firefox_path,
-                                        fennec_pkg_name, args.device_serial)
+        success = install_fennec(logger, args.firefox_path, fennec_pkg_name,
+                                 args.device_serial)
+        if not success:
+            logger.error('fennec installation fail')
+            return 1
+        logger.info('fennec installation succeed')
     else:
         if args.run_android_browser:
             logger.warning('stock Android browser only supported on Android')
