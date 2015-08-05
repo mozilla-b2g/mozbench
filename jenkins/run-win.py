@@ -32,7 +32,7 @@ subprocess.call(['mozdownload',
                  '--type', 'daily',
                  '--destination', 'firefox.exe'])
 
-subprocess.call(['mozinstall', '-d', '.', 'firefox.exe']
+subprocess.call(['mozinstall', '-d', '.', 'firefox.exe'])
 
 # Extract WebGLBenchmark files
 subprocess.call(['tar',
