@@ -142,8 +142,6 @@ def get_fennec_pkg_name(url):
 
 
 def install_fennec(logger, path, pkg_name, device_serial):
-    logger.info('installing fennec')
-
     # Check if we have any device connected
     adb_host = mozdevice.ADBHost()
     devices = adb_host.devices()
@@ -156,11 +154,11 @@ def install_fennec(logger, path, pkg_name, device_serial):
 
     # If Fennec is installed, uninstall
     if device.is_app_installed(pkg_name):
-        print("Removing fennec")
+        logger.info('fennec already installed, uninstall it first')
         device.uninstall_app(app_name=pkg_name)
 
     # Install Fennec
-    print("Starting install fennec")
+    logger.info('installing fennec')
     device.install_app(path)
     return True
 
