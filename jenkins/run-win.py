@@ -30,7 +30,6 @@ except OSError:
 
 subprocess.call(['mozdownload',
                  '--type', 'daily',
-                 '--platform', 'win32',
                  '--destination', 'firefox.exe'])
 
 subprocess.call(['mozinstall', '-d', '.', 'firefox.exe']
