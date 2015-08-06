@@ -379,7 +379,7 @@ def cli(args):
     json_result['platform'] = platform
     json_result['os_version'] = os_version
     json_result['processor'] = processor
-    json_result['suites'] = []
+    json_result['browsers'] = {}
 
     for benchmark in benchmarks:
         json_suite_results = {}
@@ -428,7 +428,6 @@ def cli(args):
                                                  cmdargs=[url])
             version, results = runtest(logger, runner, timeout)
             json_suite_results['version'] = version
-            json_suite_results['browser'] = 'firefox.nightly'
             if results is None:
                 logger.error('no results found')
             else:
@@ -440,7 +439,10 @@ def cli(args):
                 logger.info('firefox results: %s' % json.dumps(results))
                 json_suite_results["results"].append(copy.deepcopy(results))
 
-        json_result['suites'].append(json_suite_results.copy())
+        if not json_result['browsers'].get('firefox.nightly'):
+            json_result['browsers']['firefox.nightly'] = {}
+
+        json_result['browsers']['firefox.nightly'] = json_suite_results.copy()
 
         # Run chrome (if desired)
         if args.chrome_path is not None:
@@ -472,7 +474,10 @@ def cli(args):
                     json_suite_results["results"].append(copy.deepcopy(results))
 
         if args.chrome_path is not None:
-            json_result['suites'].append(json_suite_results.copy())
+            if not json_result['browsers'].get('chrome.canary'):
+                json_result['browsers']['chrome.canary'] = {}
+
+            json_result['browsers']['chrome.canary'] = json_suite_results.copy()
 
         # Run stock AOSP browser (if desired)
         if use_android and args.run_android_browser:
@@ -502,7 +507,10 @@ def cli(args):
                     json_suite_results["results"].append(copy.deepcopy(results))
 
         if use_android and args.run_android_browser:
-            json_result['suites'].append(json_suite_results.copy())
+            if not json_result['browsers'].get('android-browser'):
+                json_result['browsers']['android-browser'] = {}
+
+            json_result['browsers']['android-browser'] = json_suite_results.copy()
 
         # Run Dolphin browser (if desired)
         if use_android and args.run_dolphin:
@@ -532,7 +540,10 @@ def cli(args):
                     json_suite_results["results"].append(copy.deepcopy(results))
 
         if use_android and args.run_dolphin:
-            json_result['suites'].append(json_suite_results.copy())
+            if not json_result['browsers'].get('dolphin'):
+                json_result['browsers']['dolphin'] = {}
+
+            json_result['browsers']['dolphin'] = json_suite_results.copy()
 
         if suite == 'smoketest' and not tests_ran:
             logger.error('smoketest failed to produce results - skipping '
