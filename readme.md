@@ -11,6 +11,11 @@ make sure the path to virtual environment does not contain spaces.
     virtualenv venv
     . venv/bin/activate (linux)
     venv\Scripts\activate (windows)
+ 
+Initialize and update git submodules
+
+    git submodule init
+    git submodule update
 
 Then install the requirements:
 
