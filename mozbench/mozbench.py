@@ -122,9 +122,6 @@ def results_handler(request, response):
     headers = request.headers
     results = json.loads(request.POST['results'])
 
-routes = [('POST', '/results', results_handler),
-          ('GET', '/*', wptserve.handlers.file_handler)]
-
 
 def run_command(cmd):
     p = ProcessHandler(cmd)
@@ -277,6 +274,9 @@ def cli(args):
             logger.warning('Dolphin browser only supported on Android')
 
     logger.info('starting webserver on %s' % args.test_host)
+
+    routes = [('POST', '/results', results_handler),
+              ('GET', '/*', wptserve.handlers.file_handler)]
     static_path = os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                'static'))
     httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=8888,
