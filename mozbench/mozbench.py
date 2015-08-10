@@ -4,8 +4,10 @@
 
 import argparse
 import copy
+import random
 import fxos_appgen
 import json
+import socket
 import logging
 import marionette
 import mozinfo
@@ -257,7 +259,7 @@ def cli(args):
                         default=moznetwork.get_ip())
     parser.add_argument('--test-port',
                         help='port to host http server',
-                        default=8888)
+                        default=None)
     commandline.add_logging_group(parser)
     args = parser.parse_args(args)
 
@@ -293,11 +295,25 @@ def cli(args):
                                                'static'))
     # start http server and request handler
     httpd = None
-    try:
-        httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=int(args.test_port),
-                                             routes=routes, doc_root=static_path)
-    except:
-        return 1
+    while httpd is None:
+        port = 10000 + random.randrange(0, 50000)
+        if args.test_port:
+            port = int(args.test_port)
+
+        try:
+            httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=port,
+                                                 routes=routes, doc_root=static_path)
+        # pass if port number has been used, then try another one
+        except socket.error as e:
+            if args.test_port:
+                logger.error(e.message)
+                return 1
+            else:
+                pass
+        except Exception as e:
+            logger.error(e.message)
+            return 1
+
     httpd.start()
     httpd_logger = logging.getLogger("wptserve")
     httpd_logger.setLevel(logging.ERROR)
