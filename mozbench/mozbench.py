@@ -382,8 +382,6 @@ def cli(args):
     json_result['browsers'] = {}
 
     for benchmark in benchmarks:
-        json_suite_results = {}
-
         suite = benchmark['suite']
         url = url_prefix + benchmark['url']
         num_runs = benchmark['number_of_runs']
@@ -391,11 +389,12 @@ def cli(args):
         name = benchmark['name']
         value = benchmark['value']
 
-        json_suite_results['name'] = suite
-        json_suite_results['num_runs'] = num_runs
-        json_suite_results['result_name'] = name
-        json_suite_results['result_value'] = value
-        json_suite_results['results'] = []
+        json_result_browser_suite = {}
+        json_result_browser_suite['name'] = suite
+        json_result_browser_suite['num_runs'] = num_runs
+        json_result_browser_suite['result_name'] = name
+        json_result_browser_suite['result_value'] = value
+        json_result_browser_suite['results'] = []
 
         if args.smoketest and suite != 'smoketest':
             continue
@@ -412,6 +411,9 @@ def cli(args):
 
         logger.info('starting benchmark: %s' % suite)
 
+        if json_result['browsers'].get("firefox.nightly") is None:
+            json_result['browsers']["firefox.nightly"] = {}
+
         # Run firefox
         for i in xrange(0, num_runs):
             logger.info('firefox run %d' % i)
@@ -427,7 +429,7 @@ def cli(args):
                 runner = mozrunner.FirefoxRunner(binary=firefox_binary,
                                                  cmdargs=[url])
             version, results = runtest(logger, runner, timeout)
-            json_suite_results['version'] = version
+            json_result['browsers']["firefox.nightly"]['version'] = version
             if results is None:
                 logger.error('no results found')
             else:
@@ -437,16 +439,18 @@ def cli(args):
                                            'firefox.nightly', result[value], version,
                                            os_version, processor))
                 logger.info('firefox results: %s' % json.dumps(results))
-                json_suite_results["results"].append(copy.deepcopy(results))
+                json_result_browser_suite["results"].append(copy.deepcopy(results))
 
-        if not json_result['browsers'].get('firefox.nightly'):
-            json_result['browsers']['firefox.nightly'] = {}
+        if json_result['browsers']["firefox.nightly"].get('suites') is None:
+            json_result['browsers']["firefox.nightly"]['suites'] = []
 
-        json_result['browsers']['firefox.nightly'] = json_suite_results.copy()
+        json_result['browsers']["firefox.nightly"]['suites'].append(json_result_browser_suite.copy())
 
         # Run chrome (if desired)
         if args.chrome_path is not None:
-            json_suite_results['results'] = []
+            if json_result['browsers'].get("chrome.canary") is None:
+                json_result['browsers']["chrome.canary"] = {}
+            json_result_browser_suite["results"] = []
             for i in xrange(0, num_runs):
                 logger.info('chrome run %d' % i)
 
@@ -460,8 +464,7 @@ def cli(args):
                     runner = ChromeRunner(binary=args.chrome_path, cmdargs=[url])
 
                 version, results = runtest(logger, runner, timeout)
-                json_suite_results['version'] = version
-                json_suite_results['browser'] = 'chrome.canary'
+                json_result['browsers']["chrome.canary"]['version'] = version
                 if results is None:
                     logger.error('no results found')
                 else:
@@ -471,17 +474,18 @@ def cli(args):
                                                'chrome.canary', result[value], version,
                                                os_version, processor))
                     logger.info('chrome results: %s' % json.dumps(results))
-                    json_suite_results["results"].append(copy.deepcopy(results))
+                    json_result_browser_suite["results"].append(copy.deepcopy(results))
 
-        if args.chrome_path is not None:
-            if not json_result['browsers'].get('chrome.canary'):
-                json_result['browsers']['chrome.canary'] = {}
+            if json_result['browsers']["chrome.canary"].get('suites') is None:
+                json_result['browsers']["chrome.canary"]['suites'] = []
 
-            json_result['browsers']['chrome.canary'] = json_suite_results.copy()
+            json_result['browsers']["chrome.canary"]['suites'].append(json_result_browser_suite.copy())
 
         # Run stock AOSP browser (if desired)
         if use_android and args.run_android_browser:
-            json_suite_results['results'] = []
+            if json_result['browsers'].get("android-browser") is None:
+                json_result['browsers']["android-browser"] = {}
+            json_result_browser_suite["results"] = []
             for i in xrange(0, num_runs):
                 logger.info('android browser run %d' % i)
 
@@ -492,8 +496,7 @@ def cli(args):
                                        device_serial=args.device_serial)
 
                 version, results = runtest(logger, runner, timeout)
-                json_suite_results['version'] = version
-                json_suite_results['browser'] = 'android-browser'
+                json_result['browsers']["android-browser"]['version'] = version
                 if results is None:
                     logger.error('no results found')
                 else:
@@ -504,17 +507,18 @@ def cli(args):
                             result[value], version, os_version, processor))
                     logger.info('android browser results: %s' %
                                 json.dumps(results))
-                    json_suite_results["results"].append(copy.deepcopy(results))
+                    json_result_browser_suite["results"].append(copy.deepcopy(results))
 
-        if use_android and args.run_android_browser:
-            if not json_result['browsers'].get('android-browser'):
-                json_result['browsers']['android-browser'] = {}
+            if json_result['browsers']["android-browser"].get('suites') is None:
+                json_result['browsers']["android-browser"]['suites'] = []
 
-            json_result['browsers']['android-browser'] = json_suite_results.copy()
+            json_result['browsers']["android-browser"]['suites'].append(json_result_browser_suite.copy())
 
         # Run Dolphin browser (if desired)
         if use_android and args.run_dolphin:
-            json_suite_results['results'] = []
+            if json_result['browsers'].get("dolphin") is None:
+                json_result['browsers']["dolphin"] = {}
+            json_result_browser_suite["results"] = []
             for i in xrange(0, num_runs):
                 logger.info('dolphin run %d' % i)
 
@@ -525,8 +529,7 @@ def cli(args):
                                        device_serial=args.device_serial)
 
                 version, results = runtest(logger, runner, timeout)
-                json_suite_results['version'] = version
-                json_suite_results['browser'] = 'dolphin'
+                json_result['browsers']["dolphin"]['version'] = version
                 if results is None:
                     logger.error('no results found')
                 else:
@@ -537,13 +540,12 @@ def cli(args):
                             result[value], version, os_version, processor))
                     logger.info('dolphin results: %s' %
                                 json.dumps(results))
-                    json_suite_results["results"].append(copy.deepcopy(results))
+                    json_result_browser_suite["results"].append(copy.deepcopy(results))
 
-        if use_android and args.run_dolphin:
-            if not json_result['browsers'].get('dolphin'):
-                json_result['browsers']['dolphin'] = {}
+            if json_result['browsers']["dolphin"].get('suites') is None:
+                json_result['browsers']["dolphin"]['suites'] = []
 
-            json_result['browsers']['dolphin'] = json_suite_results.copy()
+            json_result['browsers']["dolphin"]['suites'].append(json_result_browser_suite.copy())
 
         if suite == 'smoketest' and not tests_ran:
             logger.error('smoketest failed to produce results - skipping '
