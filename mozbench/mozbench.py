@@ -295,24 +295,26 @@ def cli(args):
                                                'static'))
     # start http server and request handler
     httpd = None
-    while httpd is None:
-        port = 10000 + random.randrange(0, 50000)
-        if args.test_port:
-            port = int(args.test_port)
-
+    if args.test_port:
         try:
+            port = int(args.test_port)
             httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=port,
                                                  routes=routes, doc_root=static_path)
-        # pass if port number has been used, then try another one
-        except socket.error as e:
-            if args.test_port:
-                logger.error(e.message)
-                return 1
-            else:
-                pass
         except Exception as e:
             logger.error(e.message)
             return 1
+    else:
+        while httpd is None:
+            try:
+                port = 10000 + random.randrange(0, 50000)
+                httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=port,
+                                                     routes=routes, doc_root=static_path)
+            # pass if port number has been used, then try another one
+            except socket.error as e:
+                    pass
+            except Exception as e:
+                logger.error(e.message)
+                return 1
 
     httpd.start()
     httpd_logger = logging.getLogger("wptserve")
