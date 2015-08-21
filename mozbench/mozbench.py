@@ -39,100 +39,91 @@ results = None
 class ResultRecorder(object):
 
     def __init__(self):
-        self._platform = 'unknown'
-        self._osVersion = 'unknown'
-        self._processor = 'unknown'
-        self._currentBrowser = None
-        self._currentBenchmark = None
-        self._browsers = {}
+        self.platform = 'unknown'
+        self.os_version = 'unknown'
+        self.processor = 'unknown'
+        self.current_browser = None
+        self.current_benchmark = None
+        self.browsers = {}
 
-    def setPlatformName(self, name):
-        self._platform = name
+    def set_browser(self, browser):
+        if self.browsers.get(browser) is None:
+            self.browsers[browser] = {}
+            self.browsers[browser]['benchmarks'] = {}
+            self.browsers[browser]['version'] = ''
 
-    def setOSVersion(self, version):
-        self._osVersion = version
+        self.current_browser = self.browsers[browser]
 
-    def setProcessorName(self, name):
-        self._processor = name
+    def set_browser_version(self, version):
+        if self.current_browser is None: raise AssertionError('You should call set_browser first')
 
-    def setBrowser(self, browser):
-        if self._browsers.get(browser) is None:
-            self._browsers[browser] = {}
-            self._browsers[browser]['benchmarks'] = {}
-            self._browsers[browser]['version'] = ''
+        self.current_browser['version'] = version or 'unknown'
 
-        self._currentBrowser = self._browsers[browser]
+    def set_benchmark(self, benchmark):
+        if self.current_browser is None: raise AssertionError('You should call set_browser first')
 
-    def setBrowserVersion(self, version):
-        if self._currentBrowser is None: raise AssertionError('You should setBrowser first')
+        if self.current_browser['benchmarks'].get(benchmark) is None:
+            self.current_browser['benchmarks'][benchmark] = {}
+            self.current_browser['benchmarks'][benchmark]['result_name'] = ''
+            self.current_browser['benchmarks'][benchmark]['result_value_name'] = ''
+            self.current_browser['benchmarks'][benchmark]['results'] = []
 
-        self._currentBrowser['version'] = version or 'unknown'
+        self.current_benchmark = self.current_browser['benchmarks'][benchmark]
 
-    def setBenchmark(self, benchmark):
-        if self._currentBrowser is None: raise AssertionError('You should setBrowser first')
+    def set_result_name(self, name):
+        if self.current_benchmark is None: raise AssertionError('You should call set_benchmark first')
 
-        if self._currentBrowser['benchmarks'].get(benchmark) is None:
-            self._currentBrowser['benchmarks'][benchmark] = {}
-            self._currentBrowser['benchmarks'][benchmark]['resultName'] = ''
-            self._currentBrowser['benchmarks'][benchmark]['resultValueName'] = ''
-            self._currentBrowser['benchmarks'][benchmark]['results'] = []
+        self.current_benchmark['result_name'] = name
 
-        self._currentBenchmark = self._currentBrowser['benchmarks'][benchmark]
+    def set_result_value_name(self, name):
+        if self.current_benchmark is None: raise AssertionError('You should call set_benchmark first')
 
-    def setResultName(self, name):
-        if self._currentBenchmark is None: raise AssertionError('You should setBenchmark first')
+        self.current_benchmark['result_value_name'] = name
 
-        self._currentBenchmark['resultName'] = name
+    def add_results(self, results):
+        if self.current_benchmark is None: raise AssertionError('You should call set_benchmark first')
 
-    def setResultValueName(self, name):
-        if self._currentBenchmark is None: raise AssertionError('You should setBenchmark first')
+        self.current_benchmark['results'].append(copy.copy(results))
 
-        self._currentBenchmark['resultValueName'] = name
+    def get_influxdb_results(self):
+        results_to_return = []
+        platform = self.platform
+        osVersion = self.os_version
+        processor = self.processor
 
-    def addResults(self, results):
-        if self._currentBenchmark is None: raise AssertionError('You should setBenchmark first')
+        for browser_name in self.browsers:
+            browser = self.browsers[browser_name]
+            browser_version = browser['version']
 
-        self._currentBenchmark['results'].append(copy.copy(results))
-
-    def getInfluxDBResults(self):
-        resultsToReturn = []
-        platform = self._platform
-        osVersion = self._osVersion
-        processor = self._processor
-
-        for browserName in self._browsers:
-            browser = self._browsers[browserName]
-            browserVersion = browser['version']
-
-            for benchName in browser['benchmarks']:
-                benchmark = browser['benchmarks'][benchName]
-                resultName = benchmark['resultName']
-                resultValueName = benchmark['resultValueName']
+            for bench_name in browser['benchmarks']:
+                benchmark = browser['benchmarks'][bench_name]
+                result_name = benchmark['result_name']
+                result_value_name = benchmark['result_value_name']
 
                 for result in benchmark['results']:
-                    for singleCase in result:
-                        name = singleCase[resultName]
-                        value = singleCase[resultValueName]
+                    for single_case in result:
+                        name = single_case[result_name]
+                        value = single_case[result_value_name]
 
-                        table = 'benchmarks.' + '.'.join([benchName, name, platform, browserName])
-                        resultPoint = {
+                        table = 'benchmarks.' + '.'.join([bench_name, name, platform, browser_name])
+                        result_point = {
                                 'name': table,
                                 'columns': ['value','browser-version', 'os-version', 'processor'],
-                                'points': [[value, browserVersion, osVersion, processor]]
+                                'points': [[value, browser_version, osVersion, processor]]
                         }
-                        resultsToReturn.append(resultPoint)
+                        results_to_return.append(result_point)
 
-        return resultsToReturn
+        return results_to_return
 
-    def getGeneralResults(self):
-        resultToReturn = {}
+    def get_results(self):
+        result_to_return = {}
 
-        resultToReturn['platform'] = self._platform
-        resultToReturn['os_version'] = self._osVersion
-        resultToReturn['processor'] = self._processor
-        resultToReturn['browsers'] = copy.copy(self._browsers)
+        result_to_return['platform'] = self.platform
+        result_to_return['os_version'] = self.os_version
+        result_to_return['processor'] = self.processor
+        result_to_return['browsers'] = copy.copy(self.browsers)
 
-        return resultToReturn
+        return result_to_return
 
 
 class AndroidRunner(object):
@@ -236,7 +227,7 @@ def cleanup_android(logger, device_serial=None):
     device = mozdevice.ADBAndroid(device_serial)
 
     # Uninstall Fennec
-    device.uninstall_app(app_name='org.mozilla.fennec')
+    device.uninstall_app(app_name='org.mozilla.firefox')
 
     # Remove APK
     try:
@@ -291,8 +282,8 @@ def install_fennec(logger, url, device_serial):
     device = mozdevice.ADBAndroid(device_serial)
 
     # If Fennec istalled, uninstall
-    if device.is_app_installed('org.mozilla.fennec'):
-        device.uninstall_app(app_name='org.mozilla.fennec')
+    if device.is_app_installed('org.mozilla.firefox'):
+        device.uninstall_app(app_name='org.mozilla.firefox')
 
     # Fetch Fennec
     name, headers = urllib.urlretrieve(url, 'fennec.apk')
@@ -466,9 +457,9 @@ def cli(args):
         os_version = device.get_prop('ro.build.version.release')
         processor = device.get_prop('ro.product.cpu.abi')
 
-    result_recorder.setPlatformName(platform)
-    result_recorder.setOSVersion(os_version)
-    result_recorder.setProcessorName(processor)
+    result_recorder.platform= platform
+    result_recorder.os_version = os_version
+    result_recorder.processor = processor
 
     for benchmark in benchmarks:
         suite = benchmark['suite']
@@ -493,10 +484,10 @@ def cli(args):
 
         logger.info('starting benchmark: %s' % suite)
 
-        result_recorder.setBrowser('firefox.nightly')
-        result_recorder.setBenchmark(suite)
-        result_recorder.setResultName(name)
-        result_recorder.setResultValueName(value)
+        result_recorder.set_browser('firefox.nightly')
+        result_recorder.set_benchmark(suite)
+        result_recorder.set_result_name(name)
+        result_recorder.set_result_value_name(value)
 
         # Run firefox
         for i in xrange(0, num_runs):
@@ -504,7 +495,7 @@ def cli(args):
             if args.use_b2g:
                 runner = B2GRunner(cmdargs=[url], device_serial=args.device_serial)
             elif use_android:
-                runner = AndroidRunner(app_name='org.mozilla.fennec',
+                runner = AndroidRunner(app_name='org.mozilla.firefox',
                                        activity_name='.App',
                                        intent='android.intent.action.VIEW',
                                        url=url,
@@ -513,20 +504,20 @@ def cli(args):
                 runner = mozrunner.FirefoxRunner(binary=firefox_binary,
                                                  cmdargs=[url])
             version, results = runtest(logger, runner, timeout)
-            result_recorder.setBrowserVersion(version)
+            result_recorder.set_browser_version(version)
             if results is None:
                 logger.error('no results found')
             else:
                 tests_ran = True
-                result_recorder.addResults(results)
+                result_recorder.add_results(results)
                 logger.info('firefox results: %s' % json.dumps(results))
 
         # Run chrome (if desired)
         if args.chrome_path is not None:
-            result_recorder.setBrowser('chrome.canary')
-            result_recorder.setBenchmark(suite)
-            result_recorder.setResultName(name)
-            result_recorder.setResultValueName(value)
+            result_recorder.set_browser('chrome.canary')
+            result_recorder.set_benchmark(suite)
+            result_recorder.set_result_name(name)
+            result_recorder.set_result_value_name(value)
 
             for i in xrange(0, num_runs):
                 logger.info('chrome run %d' % i)
@@ -541,20 +532,20 @@ def cli(args):
                     runner = ChromeRunner(binary=args.chrome_path, cmdargs=[url])
 
                 version, results = runtest(logger, runner, timeout)
-                result_recorder.setBrowserVersion(version)
+                result_recorder.set_browser_version(version)
                 if results is None:
                     logger.error('no results found')
                 else:
                     tests_ran = True
-                    result_recorder.addResults(results)
+                    result_recorder.add_results(results)
                     logger.info('chrome results: %s' % json.dumps(results))
 
         # Run stock AOSP browser (if desired)
         if use_android and args.run_android_browser:
-            result_recorder.setBrowser('android-browser')
-            result_recorder.setBenchmark(suite)
-            result_recorder.setResultName(name)
-            result_recorder.setResultValueName(value)
+            result_recorder.set_browser('android-browser')
+            result_recorder.set_benchmark(suite)
+            result_recorder.set_result_name(name)
+            result_recorder.set_result_value_name(value)
 
             for i in xrange(0, num_runs):
                 logger.info('android browser run %d' % i)
@@ -566,21 +557,21 @@ def cli(args):
                                        device_serial=args.device_serial)
 
                 version, results = runtest(logger, runner, timeout)
-                result_recorder.setBrowserVersion(version)
+                result_recorder.set_browser_version(version)
                 if results is None:
                     logger.error('no results found')
                 else:
                     tests_ran = True
-                    result_recorder.addResults(results)
+                    result_recorder.add_results(results)
                     logger.info('android browser results: %s' %
                                 json.dumps(results))
 
         # Run Dolphin browser (if desired)
         if use_android and args.run_dolphin:
-            result_recorder.setBrowser('dolphin')
-            result_recorder.setBenchmark(suite)
-            result_recorder.setResultName(name)
-            result_recorder.setResultValueName(value)
+            result_recorder.set_browser('dolphin')
+            result_recorder.set_benchmark(suite)
+            result_recorder.set_result_name(name)
+            result_recorder.set_result_value_name(value)
 
             for i in xrange(0, num_runs):
                 logger.info('dolphin run %d' % i)
@@ -592,12 +583,12 @@ def cli(args):
                                        device_serial=args.device_serial)
 
                 version, results = runtest(logger, runner, timeout)
-                result_recorder.setBrowserVersion(version)
+                result_recorder.set_browser_version(version)
                 if results is None:
                     logger.error('no results found')
                 else:
                     tests_ran = True
-                    result_recorder.addResults(results)
+                    result_recorder.add_results(results)
                     logger.info('dolphin results: %s' % json.dumps(results))
 
         if suite == 'smoketest' and not tests_ran:
@@ -607,11 +598,11 @@ def cli(args):
 
     if args.post_results:
         logger.info('posting results...')
-        postresults(logger, result_recorder.getInfluxDBResults())
+        postresults(logger, result_recorder.get_influxdb_results())
 
     if args.json_result:
         with open(args.json_result, 'w') as outputFile:
-            outputFile.write(json.dumps(result_recorder.getGeneralResults()) + '\n')
+            outputFile.write(json.dumps(result_recorder.get_results()) + '\n')
 
     # Cleanup previously installed Firefox
     if not args.use_b2g:
