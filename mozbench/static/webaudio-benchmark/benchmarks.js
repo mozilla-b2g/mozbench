@@ -171,6 +171,36 @@ registerTestCase({
 
 registerTestCase({
   func: function() {
+    var oac = new OfflineAudioContext(2, 300 * samplerate, samplerate);
+    var gain = oac.createGain();
+    gain.gain.value = -1;
+    gain.connect(oac.destination);
+    var gainsi = [];
+    for (var i = 0; i < 4; i++) {
+      var gaini = oac.createGain();
+      gaini.gain.value = 0.25;
+      gaini.connect(gain);
+      gainsi[i] = gaini
+    }
+    for (var j = 0; j < 2; j++) {
+      var sourcej = oac.createBufferSource();
+      sourcej.buffer = getSpecificFile({rate: 38000, channels:1});
+      sourcej.loop = true;
+      sourcej.start(0);
+      for (var i = 0; i < 4; i++) {
+        var gainij = oac.createGain();
+        gainij.gain.value = 0.5;
+        gainij.connect(gainsi[i]);
+        sourcej.connect(gainij);
+      }
+    }
+    return oac;
+  },
+  name: "Simple mixing with gains"
+});
+
+registerTestCase({
+  func: function() {
     var oac = new OfflineAudioContext(1, 30 * samplerate, samplerate);
     var i,l;
     var decay = 10;
@@ -227,6 +257,62 @@ registerTestCase({
     return oac;
   },
   name: "Granular synthesis"
+});
+
+registerTestCase({
+  func: function() {
+    var samplerate = 44100;
+    var duration  = 30;
+    var oac = new OfflineAudioContext(1, duration * samplerate, 44100);
+    var offset = 0;
+    while (offset < duration) {
+      var note = oac.createOscillator();
+      var env = oac.createGain();
+      note.type = "sawtooth";
+      note.frequency.value = 110;
+      note.connect(env);
+      env.gain.setValueAtTime(0, 0);
+      env.gain.setValueAtTime(0.5, offset);
+      env.gain.setTargetAtTime(0, offset+0.01, 0.1);
+      env.connect(oac.destination);
+      note.start(offset);
+      note.stop(offset + 1.0);
+      offset += 140 / 60 / 4; // 140 bpm
+    }
+    return oac;
+  },
+  name: "Synth"
+});
+
+registerTestCase({
+  func: function() {
+    var samplerate = 44100;
+    var duration  = 30;
+    var oac = new OfflineAudioContext(1, duration * samplerate, samplerate);
+    var offset = 0;
+    var osc = oac.createOscillator();
+    osc.type = "sawtooth";
+    var enveloppe = oac.createGain();
+    enveloppe.gain.setValueAtTime(0, 0);
+    var filter = oac.createBiquadFilter();
+    osc.connect(enveloppe);
+    enveloppe.connect(filter);
+    filter.connect(oac.destination);
+    filter.frequency.setValueAtTime(0.0, 0.0);
+    filter.Q.setValueAtTime(20, 0.0);
+    osc.start(0);
+    osc.frequency.setValueAtTime(110, 0);
+
+    while (offset < duration) {
+      enveloppe.gain.setValueAtTime(1.0, offset);
+      enveloppe.gain.setTargetAtTime(0.0, offset, 0.1);
+      filter.frequency.setValueAtTime(0, offset);
+      filter.frequency.setTargetAtTime(3500, offset, 0.03);
+      offset += 140 / 60 / 16;
+    }
+    return oac;
+  },
+  name: "Substractive synth"
 });
 
 
