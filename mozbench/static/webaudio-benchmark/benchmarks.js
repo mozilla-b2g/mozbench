@@ -237,19 +237,19 @@ registerTestCase({
     var offset = 0;
     while (offset < duration / samplerate) {
       var grain = oac.createBufferSource();
-      var gain = oac.createGain();
-      grain.connect(gain);
-      gain.connect(oac.destination);
+      var enveloppe = oac.createGain();
+      grain.connect(enveloppe);
+      enveloppe.connect(oac.destination);
       grain.buffer = audiobuffer;
       // get a random 100-ish ms with enveloppes
       var start = offset * Math.random() * 0.5;
       var end = start + 0.005 * (0.999 * Math.random());
       grain.start(offset, start, end);
-      gain.gain.setValueAtTime(offset, 0);
-      gain.gain.linearRampToValueAtTime(.5, offset + 0.005);
+      enveloppe.gain.setValueAtTime(offset, 0);
+      enveloppe.gain.linearRampToValueAtTime(.5, offset + 0.005);
       var startRelease = Math.max(offset + (end - start), 0);
-      gain.gain.setValueAtTime(0.5, startRelease);
-      gain.gain.linearRampToValueAtTime(0.0, startRelease + 0.05);
+      enveloppe.gain.setValueAtTime(0.5, startRelease);
+      enveloppe.gain.linearRampToValueAtTime(0.0, startRelease + 0.05);
 
       // some overlap
       offset += 0.005;
@@ -267,14 +267,14 @@ registerTestCase({
     var offset = 0;
     while (offset < duration) {
       var note = oac.createOscillator();
-      var env = oac.createGain();
+      var enveloppe = oac.createGain();
       note.type = "sawtooth";
       note.frequency.value = 110;
-      note.connect(env);
-      env.gain.setValueAtTime(0, 0);
-      env.gain.setValueAtTime(0.5, offset);
-      env.gain.setTargetAtTime(0, offset+0.01, 0.1);
-      env.connect(oac.destination);
+      note.connect(enveloppe);
+      enveloppe.gain.setValueAtTime(0, 0);
+      enveloppe.gain.setValueAtTime(0.5, offset);
+      enveloppe.gain.setTargetAtTime(0, offset+0.01, 0.1);
+      enveloppe.connect(oac.destination);
       note.start(offset);
       note.stop(offset + 1.0);
       offset += 140 / 60 / 4; // 140 bpm
