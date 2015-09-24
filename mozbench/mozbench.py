@@ -96,6 +96,7 @@ class B2GRunner(object):
         #    print(x.id, x.get_attribute('src'))
         browser = m.find_element('css selector', 'iframe[src="app://search.gaiamobile.org/newtab.html"]')
         m.switch_to_frame(browser)
+        time.sleep(1)
         m.execute_script(script % self.cmdargs[0])
 
     def stop(self):
