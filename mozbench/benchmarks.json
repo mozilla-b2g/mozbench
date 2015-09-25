@@ -10,7 +10,7 @@
   {"suite": "webaudio-padenot",
    "url": "webaudio-benchmark/index.html",
    "number_of_runs": 5,
-   "timeout": 300,
+   "timeout": 1200,
    "enabled": ["all"],
    "name": "name",
    "value": "duration"
