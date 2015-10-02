@@ -35,8 +35,6 @@ from subprocess import call
 from shutil import rmtree
 from resultRecorder import ResultRecorder
 
-INFLUXDB_URL = 'http://54.215.155.53:8086/db/mozbench/series?'
-
 headers = None
 results = None
 
@@ -206,12 +204,13 @@ def postresults(logger, results):
         logger.error('could not post results: secrets file: %s not found' % secret_path)
         return
     with open(secret_path, 'r') as f:
-        user, passwd = f.read().strip().split(',')
+        user, passwd, url, dbtable = f.read().strip().split(',')
 
     # we'll try four times before giving up
     for i in xrange(0, 4):
         try:
-            r = requests.post(INFLUXDB_URL + 'u=' + user + '&p=' + passwd,
+            influxdb_url = 'http://' + url + '/db/' + dbtable + '/series?'
+            r = requests.post(influxdb_url + 'u=' + user + '&p=' + passwd,
                               data=json.dumps(results))
             logger.info('results posted: %s: %s' % (r.status_code, r.text))
             break
