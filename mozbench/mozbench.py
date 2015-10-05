@@ -209,7 +209,7 @@ def postresults(logger, results):
     # we'll try four times before giving up
     for i in xrange(0, 4):
         try:
-            influxdb_url = 'http://' + url + '/db/' + dbtable + '/series?'
+            influxdb_url = url + '/db/' + dbtable + '/series?'
             r = requests.post(influxdb_url + 'u=' + user + '&p=' + passwd,
                               data=json.dumps(results))
             logger.info('results posted: %s: %s' % (r.status_code, r.text))
