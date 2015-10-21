@@ -9,7 +9,7 @@ mozInstall==1.10
 mozbench==0.1.0
 mozcrash==0.16
 mozdevice==0.44
-mozdownload==1.17
+mozdownload==1.18.1
 mozfile==1.2
 mozhttpd==0.7
 mozinfo==0.7
