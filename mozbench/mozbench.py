@@ -332,6 +332,8 @@ def cli(args):
     processor = mozinfo.processor
     if args.use_b2g:
         platform = 'b2g'
+        device = mozdevice.ADBDevice(args.device_serial)
+        processor = device.get_prop('ro.product.cpu.abi')
     elif use_android:
         platform = 'android'
         device = mozdevice.ADBAndroid(args.device_serial)
