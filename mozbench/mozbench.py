@@ -139,6 +139,28 @@ def get_fennec_pkg_name(url):
     return pkgName.rstrip()
 
 
+def get_b2g_version():
+    m = marionette.Marionette('localhost', 2828)
+    m.start_session()
+    m.set_script_timeout(5000)
+    try:
+        version = m.execute_async_script("""
+            let lock = window.navigator.mozSettings.createLock();
+            let setting = lock.get("deviceinfo.os");
+
+            setting.onsuccess = function() {
+                marionetteScriptFinished(setting.result["deviceinfo.os"]);
+            }
+            setting.onerror = function() {
+                marionetteScriptFinished("unknown");
+            }
+        """)
+    except Exception as e:
+        version = "unknown"
+
+    return version
+
+
 def install_fennec(logger, path, pkg_name, device_serial):
     # Check if we have any device connected
     adb_host = mozdevice.ADBHost()
@@ -333,6 +355,7 @@ def cli(args):
     if args.use_b2g:
         platform = 'b2g'
         device = mozdevice.ADBDevice(args.device_serial)
+        os_version = get_b2g_version()
         processor = device.get_prop('ro.product.cpu.abi')
     elif use_android:
         platform = 'android'
