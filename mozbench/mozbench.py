@@ -139,7 +139,10 @@ def get_fennec_pkg_name(url):
     return pkgName.rstrip()
 
 
-def get_b2g_version():
+def get_b2g_version(device_serial):
+    device_manager = mozdevice.ADBDevice(device_serial)
+    device_manager.forward('tcp:2828', 'tcp:2828')
+
     m = marionette.Marionette('localhost', 2828)
     m.start_session()
     m.set_script_timeout(5000)
@@ -354,9 +357,10 @@ def cli(args):
     processor = mozinfo.processor
     if args.use_b2g:
         platform = 'b2g'
-        device = mozdevice.ADBDevice(args.device_serial)
-        os_version = get_b2g_version()
-        processor = device.get_prop('ro.product.cpu.abi')
+        device_manager = mozdevice.ADBDevice(args.device_serial)
+        os_version = get_b2g_version(args.device_serial)
+        processor = device_manager.get_prop('ro.product.cpu.abi')
+        device = device_manager.get_prop('ro.product.device')
     elif use_android:
         platform = 'android'
         device = mozdevice.ADBAndroid(args.device_serial)
