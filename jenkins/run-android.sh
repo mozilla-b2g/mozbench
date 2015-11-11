@@ -14,4 +14,4 @@ tar xzf mozbench/static/Unity-WebGLBenchmark/Data/WebGLBenchmarks.data.tar.gz -C
 tar xzf mozbench/static/Unity-WebGLBenchmark/Data/WebGLBenchmarks.js.tar.gz -C mozbench/static/Unity-WebGLBenchmark/Data/
 
 mozdownload --type daily --application fennec --platform android-api-11 --destination fennec.apk
-python -m mozbench.mozbench --firefox-path fennec.apk --chrome-path com.android.chrome --run-android-browser --device-serial $DEVICE_SERIAL --test-host $TEST_HOST --log-mach=- --log-mach-level=info --post-results
+python -m mozbench.mozbench --firefox-path fennec.apk --chrome-path com.android.chrome --device-serial $DEVICE_SERIAL --test-host $TEST_HOST --log-mach=- --log-mach-level=info --post-results
