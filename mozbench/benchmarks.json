@@ -19,7 +19,7 @@
    "url": "Massive/index.html?autoRun=true,postToURL=/results",
    "number_of_runs": 5,
    "timeout": 2000,
-   "enabled": ["all"],
+   "enabled": ["linux", "mac", "win"],
    "name": "benchmark",
    "value": "result"
   },
@@ -35,7 +35,7 @@
   "url": "Chalkboard/index.html",
   "number_of_runs": 5,
   "timeout": 2000,
-  "enabled": ["android"],
+  "enabled": [],
   "name": "benchmark",
   "value": "result"
   },
@@ -51,7 +51,7 @@
    "url": "Kraken/index.html",
    "number_of_runs": 5,
    "timeout": 2000,
-   "enabled": ["android"],
+   "enabled": [],
    "name": "benchmark",
    "value": "result"
   }
