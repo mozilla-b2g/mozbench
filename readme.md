@@ -27,10 +27,10 @@ To run the benchmarks, activate your virtual environment as described above
 and run the mozbench.py script from the mozbench directory:
 
     cd mozbench
-    python mozbench.py --firefox-url <url> --chrome-path <path> --log-mach=-
+    python mozbench.py --firefox-path <path> --chrome-path <path> --log-mach=-
 
-For the firefox url, you can use a file:// url which points to the firefox
-installer rather than downloading it from an external location.
+For the firefox path, you should point to the folder which your firefox executable
+placed in.
 
 On Windows the chrome canary path is typically:
 
@@ -46,23 +46,23 @@ updated through the normal chrome update channels.
 
 To run the benchmarks on android, without chrome:
 
-    python mozbench.py --firefox-url <url> --log-mach=-
+    python mozbench.py --firefox-path <path> --log-mach=-
 
-The firefox url should point to a fennec apk in this case. To run the benchmarks
+The firefox path should point to a fennec apk in this case. To run the benchmarks
 on android with chrome installed, the chrome path is the name of the chrome
 package to use, as follows:
 
-    python mozbench.py --firefox-url <url> --chrome-path com.android.chrome --log-mach=-
+    python mozbench.py --firefox-path <path> --chrome-path com.android.chrome --log-mach=-
 
 To also run the benchmarks on the stock Android browser, specify the
 --run-android-browser argument, e.g.
 
-    python mozbench.py --firefox-url <url> --run-android-browser --log-mach=-
+    python mozbench.py --firefox-path <path> --run-android-browser --log-mach=-
 
 To run the tests on the Dolphin Browser on Android, specify the
 --run-dolphin argument, e.g.
 
-    python mozbench.py --firefox-url <url> --run-dolphin --log-mach=-
+    python mozbench.py --firefox-path <path> --run-dolphin --log-mach=-
 
 To run the benchmarks on Firefox OS it is first necessary to flash the phone
 with the desired build to test. It can then be run using the following command
