@@ -234,9 +234,10 @@ def postresults(logger, results):
     # we'll try four times before giving up
     for i in xrange(0, 4):
         try:
-            influxdb_url = url + '/db/' + dbtable + '/series?'
-            r = requests.post(influxdb_url + 'u=' + user + '&p=' + passwd,
-                              data=json.dumps(results))
+            headers = {'X-Requested-With': 'Python requests', 'Content-type': 'text/xml'}
+            influxdb_url = url + '/write?db=' + dbtable
+            r = requests.post(influxdb_url + '&u=' + user + '&p=' + passwd,
+                              data=results, headers=headers)
             logger.info('results posted: %s: %s' % (r.status_code, r.text))
             break
         except requests.exceptions.ConnectionError:
@@ -355,6 +356,7 @@ def cli(args):
     platform = mozinfo.os
     os_version = mozinfo.version
     processor = mozinfo.processor
+    device = 'desktop'
     if args.use_b2g:
         platform = 'b2g'
         device_manager = mozdevice.ADBDevice(args.device_serial)
@@ -363,10 +365,12 @@ def cli(args):
         device = device_manager.get_prop('ro.product.device')
     elif use_android:
         platform = 'android'
-        device = mozdevice.ADBAndroid(args.device_serial)
-        os_version = device.get_prop('ro.build.version.release')
-        processor = device.get_prop('ro.product.cpu.abi')
+        device_manager = mozdevice.ADBAndroid(args.device_serial)
+        os_version = device_manager.get_prop('ro.build.version.release')
+        processor = device_manager.get_prop('ro.product.cpu.abi')
+        device = device_manager.get_prop('ro.product.device')
 
+    result_recorder.device= device
     result_recorder.platform= platform
     result_recorder.os_version = os_version
     result_recorder.processor = processor
