@@ -38,6 +38,7 @@ from resultRecorder import ResultRecorder
 headers = None
 results = None
 
+
 class AndroidRunner(object):
 
     def __init__(self, app_name, activity_name, intent, url, device_serial):
@@ -84,7 +85,9 @@ class B2GRunner(object):
         fxos_appgen.launch_app('browser', device_serial=self.device_serial)
 
         script = """
-          setTimeout(function () {window.wrappedJSObject.Search.navigate('%s')}, 0);
+          setTimeout(function () {
+            window.wrappedJSObject.Search.navigate('%s')
+          }, 0);
         """
         m = marionette.Marionette('localhost', 2828)
         m.start_session()
@@ -92,7 +95,9 @@ class B2GRunner(object):
         # is helpful to find it
         #for x in m.find_elements('css selector', 'iframe'):
         #    print(x.id, x.get_attribute('src'))
-        browser = m.find_element('css selector', 'iframe[src="app://search.gaiamobile.org/newtab.html"]')
+        browser = m.find_element(
+            'css selector',
+            'iframe[src="app://search.gaiamobile.org/newtab.html"]')
         m.switch_to_frame(browser)
         time.sleep(1)
         m.execute_script(script % self.cmdargs[0])
@@ -226,7 +231,8 @@ def postresults(logger, results):
 
     secret_path = os.path.join(os.path.expanduser('~'), 'influxdb-secret.txt')
     if not os.path.isfile(secret_path):
-        logger.error('could not post results: secrets file: %s not found' % secret_path)
+        logger.error('could not post results: secrets file: %s not found'
+                     % secret_path)
         return
     with open(secret_path, 'r') as f:
         user, passwd, url, dbtable = f.read().strip().split(',')
@@ -234,7 +240,10 @@ def postresults(logger, results):
     # we'll try four times before giving up
     for i in xrange(0, 4):
         try:
-            headers = {'X-Requested-With': 'Python requests', 'Content-type': 'text/xml'}
+            headers = {
+                'X-Requested-With': 'Python requests',
+                'Content-type': 'text/xml'
+            }
             influxdb_url = url + '/write?db=' + dbtable
             r = requests.post(influxdb_url + '&u=' + user + '&p=' + passwd,
                               data=results, headers=headers)
@@ -321,8 +330,9 @@ def cli(args):
     if args.test_port:
         try:
             port = int(args.test_port)
-            httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=port,
-                                                 routes=routes, doc_root=static_path)
+            httpd = wptserve.server.WebTestHttpd(host=args.test_host,
+                                                 port=port, routes=routes,
+                                                 doc_root=static_path)
         except Exception as e:
             logger.error(e.message)
             return 1
@@ -330,8 +340,9 @@ def cli(args):
         while httpd is None:
             try:
                 port = 10000 + random.randrange(0, 50000)
-                httpd = wptserve.server.WebTestHttpd(host=args.test_host, port=port,
-                                                     routes=routes, doc_root=static_path)
+                httpd = wptserve.server.WebTestHttpd(host=args.test_host,
+                                                     port=port, routes=routes,
+                                                     doc_root=static_path)
             # pass if port number has been used, then try another one
             except socket.error as e:
                     pass
@@ -343,7 +354,7 @@ def cli(args):
     httpd_logger = logging.getLogger("wptserve")
     httpd_logger.setLevel(logging.ERROR)
 
-    logger.info('starting webserver on %s:%s' %(httpd.host, str(httpd.port)))
+    logger.info('starting webserver on %s:%s' % (httpd.host, str(httpd.port)))
 
     url_prefix = 'http://' + httpd.host + ':' + str(httpd.port) + '/'
 
@@ -370,8 +381,8 @@ def cli(args):
         processor = device_manager.get_prop('ro.product.cpu.abi')
         device = device_manager.get_prop('ro.product.device')
 
-    result_recorder.device= device
-    result_recorder.platform= platform
+    result_recorder.device = device
+    result_recorder.platform = platform
     result_recorder.os_version = os_version
     result_recorder.processor = processor
 
@@ -391,9 +402,9 @@ def cli(args):
             if not suite in args.run_benchmarks.strip().split(','):
                 continue
         elif not ('all' in benchmark['enabled'] or
-                platform in benchmark['enabled']):
+                  platform in benchmark['enabled']):
             logger.info('skipping disabled benchmark: %s for platform %s' %
-                         (suite, platform))
+                        (suite, platform))
             continue
 
         logger.info('starting benchmark: %s' % suite)
@@ -407,7 +418,8 @@ def cli(args):
         for i in xrange(0, num_runs):
             logger.info('firefox run %d' % i)
             if args.use_b2g:
-                runner = B2GRunner(cmdargs=[url], device_serial=args.device_serial)
+                runner = B2GRunner(cmdargs=[url],
+                                   device_serial=args.device_serial)
             elif use_android:
                 runner = AndroidRunner(app_name=fennec_pkg_name,
                                        activity_name='.App',
@@ -437,13 +449,15 @@ def cli(args):
                 logger.info('chrome run %d' % i)
 
                 if use_android:
-                    runner = AndroidRunner(app_name=args.chrome_path,
-                                           activity_name='com.google.android.apps.chrome.Main',
-                                           intent='android.intent.action.VIEW',
-                                           url=url,
-                                           device_serial=args.device_serial)
+                    runner = AndroidRunner(
+                        app_name=args.chrome_path,
+                        activity_name='com.google.android.apps.chrome.Main',
+                        intent='android.intent.action.VIEW',
+                        url=url,
+                        device_serial=args.device_serial)
                 else:
-                    runner = ChromeRunner(binary=args.chrome_path, cmdargs=[url])
+                    runner = ChromeRunner(binary=args.chrome_path,
+                                          cmdargs=[url])
 
                 version, results = runtest(logger, runner, timeout)
                 result_recorder.set_browser_version(version)
