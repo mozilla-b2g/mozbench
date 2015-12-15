@@ -1,6 +1,7 @@
 import copy
 import time
 
+
 class ResultRecorder(object):
 
     def __init__(self):
@@ -14,40 +15,45 @@ class ResultRecorder(object):
 
     def set_browser(self, browser):
         if self.browsers.get(browser) is None:
-            self.browsers[browser] = {}
-            self.browsers[browser]['benchmarks'] = {}
-            self.browsers[browser]['version'] = ''
+            browser = self.browsers[browser] = {}
+            browser['benchmarks'] = {}
+            browser['version'] = ''
 
         self.current_browser = self.browsers[browser]
 
     def set_browser_version(self, version):
-        if self.current_browser is None: raise AssertionError('You should call set_browser first')
+        if self.current_browser is None:
+            raise AssertionError('You should call set_browser first')
 
         self.current_browser['version'] = version or 'unknown'
 
     def set_benchmark(self, benchmark):
-        if self.current_browser is None: raise AssertionError('You should call set_browser first')
+        if self.current_browser is None:
+            raise AssertionError('You should call set_browser first')
 
         if self.current_browser['benchmarks'].get(benchmark) is None:
-            self.current_browser['benchmarks'][benchmark] = {}
-            self.current_browser['benchmarks'][benchmark]['result_name'] = ''
-            self.current_browser['benchmarks'][benchmark]['result_value_name'] = ''
-            self.current_browser['benchmarks'][benchmark]['results'] = []
+            benchmark = self.current_browser['benchmarks'][benchmark] = {}
+            benchmark['result_name'] = ''
+            benchmark['result_value_name'] = ''
+            benchmark['results'] = []
 
         self.current_benchmark = self.current_browser['benchmarks'][benchmark]
 
     def set_result_name(self, name):
-        if self.current_benchmark is None: raise AssertionError('You should call set_benchmark first')
+        if self.current_benchmark is None:
+            raise AssertionError('You should call set_benchmark first')
 
         self.current_benchmark['result_name'] = name
 
     def set_result_value_name(self, name):
-        if self.current_benchmark is None: raise AssertionError('You should call set_benchmark first')
+        if self.current_benchmark is None:
+            raise AssertionError('You should call set_benchmark first')
 
         self.current_benchmark['result_value_name'] = name
 
     def add_results(self, results):
-        if self.current_benchmark is None: raise AssertionError('You should call set_benchmark first')
+        if self.current_benchmark is None:
+            raise AssertionError('You should call set_benchmark first')
 
         self.current_benchmark['results'].append(copy.copy(results))
 
@@ -56,7 +62,8 @@ class ResultRecorder(object):
         platform = self.platform
         osVersion = self.os_version
         processor = self.processor
-        timestamp = str(int(time.time()*1000000000)) # The time precision of InfluxDB is nanoseconds
+        # The time precision of InfluxDB is nanoseconds
+        timestamp = str(int(time.time() * 1000000000))
         device = self.device
 
         for browser_name in self.browsers:
@@ -81,12 +88,16 @@ class ResultRecorder(object):
                                ',browser-version=' + browser_version +
                                ',os-version=' + osVersion +
                                ',processor=' + processor)
-                        # Measurement names, tag keys, and tag values must escape any spaces using a backslash.
-                        tag = tag.replace(' ', '\ ') # TODO: comma and equal should be handled as well
+                        # Measurement names, tag keys, and tag values must
+                        # escape any spaces using a backslash.
+                        #
+                        # TODO: comma and equal should be handled as well
+                        tag = tag.replace(' ', '\ ')
 
                         val = 'value=%s' % float(value)
 
-                        result_point = series + ',' + tag + ' ' + val + ' ' + timestamp + '\n'
+                        result_point = (series + ',' + tag + ' ' + val + ' ' +
+                                        timestamp + '\n')
                         results_to_return += result_point
 
         return results_to_return
