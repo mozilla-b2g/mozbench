@@ -132,11 +132,18 @@ extract a result for an individual test. For instance, if your results
 object looks like ['benchmark': 'benchmark1', 'elapsed\_msec': 20] Then
 _name_ should be set to 'benchmark' and _value_ to 'elapsed\_msec'.
 
-#Posting to Datazilla
+#Posting to influxdb
 
-Results will be posted to datazilla if mozbench is run with the
---post\_results flag. The datazilla credentials should be placed in a file
-called datazilla_secrets.txt in the user's home directory.
+Results will be posted to influxdb database if mozbench is run with the
+--post-results flag. The influxdb credentials should be placed in a file
+called influxdb-secrets.txt in the user's home directory, and with texts
+in the form below:
+
+    db_username,db_password,db_url_address,db_name
+
+A practical example should looks like:
+
+    foo,bar,https://url/to/database,benchmarks
 
 #Jenkins
 
