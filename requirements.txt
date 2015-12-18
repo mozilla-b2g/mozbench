@@ -6,7 +6,6 @@ marionette-client==0.12
 marionette-driver==0.13
 marionette-transport==0.7
 mozInstall==1.10
-mozbench==0.1.0
 mozcrash==0.16
 mozdevice==0.44
 mozdownload==1.19
