@@ -15,9 +15,9 @@ class ResultRecorder(object):
 
     def set_browser(self, browser):
         if self.browsers.get(browser) is None:
-            browser = self.browsers[browser] = {}
-            browser['benchmarks'] = {}
-            browser['version'] = ''
+            self.browsers[browser] = {}
+            self.browsers[browser]['benchmarks'] = {}
+            self.browsers[browser]['version'] = ''
 
         self.current_browser = self.browsers[browser]
 
@@ -32,10 +32,10 @@ class ResultRecorder(object):
             raise AssertionError('You should call set_browser first')
 
         if self.current_browser['benchmarks'].get(benchmark) is None:
-            benchmark = self.current_browser['benchmarks'][benchmark] = {}
-            benchmark['result_name'] = ''
-            benchmark['result_value_name'] = ''
-            benchmark['results'] = []
+            self.current_browser['benchmarks'][benchmark] = {}
+            self.current_browser['benchmarks'][benchmark]['result_name'] = ''
+            self.current_browser['benchmarks'][benchmark]['result_value_name'] = ''
+            self.current_browser['benchmarks'][benchmark]['results'] = []
 
         self.current_benchmark = self.current_browser['benchmarks'][benchmark]
 
